@@ -1,0 +1,42 @@
+<!--
+
+EdgeMAX Wizard "OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
+Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
+
+-->
+<div class="instructions">
+    <h3>OLSRd_V2</h3>
+</div>
+<legend style="position:absolute;right:0px;padding:5px;">
+    <center>EdgeMAX Wizard "OLSRd_V2"<br>created 03/2017 by CPO for FunkFeuer.at<br>
+    Version 20170314/pkg0.1/oonf0.10.10</center>
+</legend>
+<div style="padding:15px;border: 1px solid lightgray;width:648px">
+  <table border="0">
+    <tr><td style="vertical-align:middle">olsrd2 Status:</td><td><input style="right:10px" id="olsrd2status" name="olsrd2status" type="text" size="60" disabled /></td></tr>
+  </table>
+</div>
+<br><br>
+&nbsp;
+<script>
+function colors() {
+    var input = document.getElementById('olsrd2status');
+    input.style.color = "black";
+    if (input.value.match(/error/)) {
+        input.style.color = "red";
+        //disable();
+    } else if (input.value.match(/success/)) {
+        input.style.color = "green";
+        //enable();
+    }
+    document.getElementById('olsrd2status').disabled = true;
+}
+function validate() {
+}
+document.onchange=function(){
+    colors();
+}
+document.onsubmit=function(){
+    colors();
+}
+</script>

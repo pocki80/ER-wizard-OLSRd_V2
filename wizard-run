@@ -1,0 +1,118 @@
+#!/bin/bash
+
+#
+# EdgeMAX Wizard "ER-wizard-OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
+# Shortform: OLSRd_V2
+#
+# Github repository: https://github.com/pocki80/ER-wizard-OLSRd_V2
+#
+# Works on all EdgeRouter and EdgePoint Devices (system version 1.9.0+)
+#
+#
+
+ACTION=$1
+INPUT=$2
+
+olsrd2dir="/config/olsrd2/"
+log="/var/log/olsrd2.log"
+
+filename="ER-OLSRd_V2.pkg"
+
+#
+# DO NOT EDIT BELOW HERE !
+#
+
+echo "EdgeMAX OLSRd_V2 Wizard started $(date +%H:%M:%S.%N)" >>$log
+
+#base64begin 
+# !dont edit or remove this comment!
+# first run of wizard, so load and install package
+echo "Installation started $(date +%H:%M:%S.%N)" >>$log
+
+# package
+#echo "ITxhcmNoPgpkZWJpYW4tYmluYXJ5ICAgMTQ4NzcxNjM2OCAgMCAgICAgMCAgICAgMTAwNjQ0ICA0
+#lj71RgAAAADRnhAMAAHVnHCAoOwBAAAAv8sAR5vjUUADAAAAAAFZWg==
+#" | base64 -d > $olsrd2dir$filename
+#if [[ $? == 0 ]]; then 
+#    echo "extracted package file: "$filename" without error" >> $log
+#else
+#    echo "extraction of package file failed" >> $log
+#fi
+
+# remove installtion block
+sed -i '/^#base64begin/,/^#base64end$/d' $0
+# !dont edit or remove this comment!
+#base64end
+
+# hosts to check for online status
+v4iphost='8.8.8.8'
+v4dnshost='www.google.com'
+v6iphost='2001:4860:4860::8888'
+v6dnshost='www.google.com'
+# function to check if connectivity is given to download packages
+onlinecheck () {
+    ping="ping -c 1 -W 1 ";
+    ping6="ping6 -c 1 -W 1 ";
+    $ping $v4iphost > /dev/null
+    if [[ $? == 0 ]]; then
+        $ping6 $v6iphost > /dev/null
+        if [[ $? == 0 ]]; then
+            $ping6 $v6dnshost > /dev/null
+            if [[ $? == 0 ]]; then
+                return 0
+            else
+                return 1
+            fi
+        else
+            $ping $v4dnshost > /dev/null
+            if [[ $? == 0 ]]; then
+                return 0
+            else
+                return 1
+            fi
+        fi
+    else
+        return 1
+    fi
+}
+
+# function called when you click the wizard
+load () {
+    echo "Load procedure..." >> $log
+    if [ $(ps ax | grep olsrd2 | grep olsrd2.conf | grep -v grep | wc -l) == "1" ]; then
+        packagestatus='"olsrd2status":"success: daemon is running"'
+    else
+        packagestatus='"olsrd2status":"erro: not running"'
+    fi
+    
+    # get all variables together for output
+    echo -n "{\"success\":\"1\",\"data\":{ $packagestatus },"
+    echo    " \"definition\":{ }}"
+}
+
+# function called when you click apply
+apply () {
+    installpackage=$(jq -M -r '.installbmkpackage' $INPUT)
+
+    # for debugging purposes
+    cp $INPUT /tmp/result.json
+
+    # $ret and $output comes from port change
+    if [ "$ret" == "1" ]; then
+        echo "{\"success\":\"0\",\"error\": \"${output//\"/\'}\"}"
+    else
+        echo "{\"success\":\"1\"}"
+    fi
+}
+
+case "$ACTION" in
+    load)
+        load
+        ;;
+    apply)
+        apply
+        ;;
+esac
+
+echo "EdgeMAX OLSRd_V2 Wizard ended $(date +%H:%M:%S.%N)" >> $log
+
