@@ -2,7 +2,8 @@
 
 #
 # EdgeMAX Wizard "ER-wizard-OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
-# Version 20170321/pkg-0.3/oonf-0.13.0
+# Version 20170322/pkg-0.3/oonf-0.13.0
+# ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: OLSRd_V2
 #
 # Github repository (this wizard): https://github.com/pocki80/ER-wizard-OLSRd_V2
@@ -18,6 +19,11 @@ INPUT=$2
 olsrd2dir="/config/olsrd2/"
 log="/var/log/0xffolsrd2.log"
 packagefile="0xff-er-olsrd-v2_0.3_mipsel.deb"
+
+#define update sources on github
+gitowner="pocki80"
+gitrepo="ER-wizard-OLSRd_V2"
+gitbranch="master"
 
 #
 # DO NOT EDIT BELOW HERE !
@@ -4893,13 +4899,13 @@ T+u1p91DvSpFuQAXX+bD+MGDbSTWcM5/rxL1VCBjWjucVeSjfAoqCIaEwAAYa8qVAAHo6BCAkFjv
 3juEPjANiwIAAAAAAVla
 " | base64 -d >/tmp/$packagefile
 if [[ $? == 0 ]]; then 
-    echo "extracted package file: "$filename" without error" >> $log
+    echo "extracted package file: "$packagefile" without error" >> $log
 else
     echo "extraction of package file failed" >> $log
 fi
 
 dpkg -i /tmp/$packagefile >>$log
-rm -f /tmp/$packagefile
+rm -f /tmp/$packagefile >>$log
 
 # remove installtion block
 sed -i '/^#base64begin/,/^#base64end$/d' $0
@@ -4941,6 +4947,42 @@ onlinecheck () {
 # function called when you click the wizard
 load () {
     echo "Load procedure..." >> $log
+
+    ####### wizard version check against github
+    # 
+    olsrdwizard=""
+    for i in $(find /config/wizard/feature/ -name wizard.html | grep -i olsr); do
+        if [[ $(head $i -n 10 | grep 'OLSRd_V2') ]]; then
+            olsrdwizard=$i
+            break
+        fi
+    done
+    if [ ! $olsrdwizard ]; then
+        updatetext="error: OLSRd_V2 wizard.html not found!" >>$log 2>>$log
+    else
+        CURRENTVERSION=$(head -n 8 $olsrdwizard | grep -i versioninfo= | awk -F"=" {'print $2'})
+        if [ $((onlinecheck)) = 0 ]; then
+            GITVERSION=$(curl -sL https://raw.githubusercontent.com/$gitowner/$gitrepo/$gitbranch/wizard.html | head -n 8 | grep -i versioninfo= | awk -F"=" {'print $2'})
+            if [ "$GITVERSION" ] && [ "$CURRENTVERSION" ]; then 
+                if [ $(($GITVERSION)) \> $(($CURRENTVERSION)) ]; then 
+                    updatetext="new version available: "$GITVERSION", current: "$CURRENTVERSION >>$log 2>>$log
+                else
+                    updatetext="current version "$CURRENTVERSION" is up-to-date" >>$log 2>>$log
+                fi
+            else
+                updatetext="version info not available. git:"$GITVERSION", current: "$CURRENTVERSION"." >>$log 2>>$log
+            fi
+        else
+            updatetext="version info not available. git:OFFLINE, current: "$CURRENTVERSION"." >>$log 2>>$log
+        fi
+    fi
+    updatestatus=',"updatestatus":"'$updatetext'"'
+    # end
+    ####### wizard version check against github
+
+
+    ####### olsrd version check
+    # 
     if [ $(ps ax | grep olsrd2 | grep olsrd2.conf | grep -v grep | wc -l) == "1" ]; then
         gitversion=$(/config/olsrd2/olsrd2 --version | grep -i "git commit" | awk -F': ' {'print $2;'})
         olsr2version=$(/config/olsrd2/olsrd2 --version | grep -i "OLSRd2 version" | awk {'print $3;'})
@@ -4948,23 +4990,68 @@ load () {
     else
         packagestatus='"olsrd2status":"error: not running"'
     fi
+    # end
+    ####### olsrd version check
     
     # get all variables together for output
-    echo -n "{\"success\":\"1\",\"data\":{ $packagestatus },"
+    echo -n "{\"success\":\"1\",\"data\":{ $packagestatus $updatestatus },"
     echo    " \"definition\":{ }}"
 }
 
 # function called when you click apply
 apply () {
+    ####### wizard manual update from github
+    # update wizard from github
+    # load actual sources (ignoring releases)
+    updatefromgithub=$(jq -M -r '.updatefromgithub' $INPUT)
+    if [[ "$updatefromgithub" == "on" ]]; then
+        echo "update from github requested" >>$log 2>>$log
+        olsrdwizard=""
+        for i in $(find /config/wizard/feature/ -name wizard.html | grep -i olsr); do
+            if [[ $(head $i -n 10 | grep 'OLSRd_V2') ]]; then
+                olsrdwizard=$i
+                break
+            fi
+        done
+        if [ ! $olsrdwizard ]; then
+            echo "error: OLSRd_V2 wizard.html not found!" >>$log 2>>$log
+        elif [ $((onlinecheck)) != 0 ]; then
+            echo "currently offline" >>$log 2>>$log
+        else
+            curl -sL -o /tmp/ER-wizard-OLSRd_V2_latest.tar.gz https://api.github.com/repos/$gitowner/$gitrepo/tarball >>$log 2>>$log
+            tar   -xvzf /tmp/ER-wizard-OLSRd_V2_latest.tar.gz -C /tmp >/tmp/result.txt 2>>$log
+            rm -f       /tmp/ER-wizard-OLSRd_V2_latest.tar.gz >>$log 2>>$log
+            while read LINE; do
+              set $LINE
+              if [ $(basename $LINE) == "wizard-run" ] || [ $(basename $LINE) == "wizard.html" ] || [ $(basename $LINE) == "validator.json" ]; then W=1; else W=2; fi
+              [ -f "/tmp/"$LINE ] && [ $W == "1" ] && cp "/tmp/"$LINE $(dirname $olsrdwizard)"/"$(basename $LINE) >>$log 2>>$log
+            done < /tmp/result.txt
+            rm /tmp/result.txt >>$log 2>>$log
+            rm -Rf /tmp/$gitowner-$gitrepo* >>$log 2>>$log
+            chmod 755 $(dirname $olsrdwizard)"/"wizard-run >>$log 2>>$log
+            # before current WebGui session will break due to olsrd2-install/restart, send success to browser
+            echo "{\"success\":\"1\"}"
+            ret="99"
+            $(dirname $olsrdwizard)"/"wizard-run load >>$log 2>>$log
+            echo "EdgeMAX OLSRd_V2 Wizard stopped $(date +%H:%M:%S.%N)" >> $log
+        fi
+    fi
+    # end
+    ####### wizard manual update from github
+
+    ####### restart daemon
+    # 
     olsrdrestartnow=$(jq -M -r '.olsrdrestartnow' $INPUT)
     if [[ "$olsrdrestartnow" == "on" ]]; then
         # stop daemon
         ps aux | grep "olsrd2 " | grep olsrd2.conf | grep -v grep | awk '{print $2;}' | xargs kill >>$log 2>>$log
         sleep 1
-        rm -f /var/lock/olsrd2
+        rm -f /var/lock/olsrd2 >>$log 2>>$log
         # restart daemon
         $olsrd2dir""olsrd2 -l $olsrd2dir"olsrd2.conf" >>$log 2>>$log
     fi
+    # end
+    ####### restart daemon
 
     # for debugging purposes
     cp $INPUT /tmp/result.json
@@ -4972,6 +5059,8 @@ apply () {
     # $ret and $output comes from port change
     if [ "$ret" == "1" ]; then
         echo "{\"success\":\"0\",\"error\": \"${output//\"/\'}\"}"
+    elif [ "$ret" == "99" ]; then
+        echo "result already sent, so do nothing here" >/dev/null
     else
         echo "{\"success\":\"1\"}"
     fi
