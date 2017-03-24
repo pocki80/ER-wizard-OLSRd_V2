@@ -5021,7 +5021,7 @@ load () {
     ####### olsrd v6 insterface list
 
     # get all variables together for output
-    echo -n "{\"success\":\"1\",\"data\":{ $packagestatus $updatestatus ,$olsr6interfaces},"
+    echo -n "{\"success\":\"1\",\"data\":{ $packagestatus $updatestatus ,\"olsr6config\":[$olsr6interfaces]$},"
     echo    " \"definition\":{ }}"
 }
 
