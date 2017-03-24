@@ -2,7 +2,7 @@
 
 EdgeMAX Wizard "OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201703221
+versioninfo=201703240
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 
 -->
@@ -11,7 +11,7 @@ versioninfo=201703221
 </div>
 <legend style="position:absolute;right:0px;padding:5px;">
     <center>EdgeMAX Wizard "OLSRd_V2"<br>created 03/2017 by CPO for FunkFeuer.at<br>
-    Version 20170322/pkg-0.4/oonf-0.13.0</center>
+    Version 20170324/pkg-0.4/oonf-0.13.0</center>
 </legend>
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
   <table border="0">
@@ -19,10 +19,41 @@ versioninfo=201703221
     <tr><td style="vertical-align:middle">Update Info:</td><td><input style="right:10px" id="updatestatus" name="updatestatus" type="text" size="60" disabled /></td></tr>
   </table>
   <br>
-  <input id="updatefromgithub" name="updatefromgithub"  type="checkbox" /><span> Upgrade Wizard from GitHub (online only) on 'Apply'.</span><br>
+  <input id="updatefromgithub" name="updatefromgithub"  type="checkbox" /><span> Upgrade Wizard from GitHub (online only) on 'Apply'</span><br>
   <input id="olsrdrestart" name="olsrdrestartnow"  type="checkbox" /><span> Restart OLSRv2 daemon on 'Apply'</span><br>
 </div>
 <br><br>
+<fieldset id="ipv6olsrd" name="ipv6olsrd" class="primary expanded">
+    <legend>OLSRd2 IPv6</legend>
+    <table border="0">
+      <tr><td style="vertical-align:middle">Node-ID </td><td><input style="right:10px" id="nodeid" name="nodeid" type="text" size="10" /></td></tr>
+      <tr><td style="vertical-align:middle">Router und NIC ID </td>
+         <td><input style="right:10px" id="routerid" name="routerid" type="text" size="5" /><input style="right:10px" id="nicid" name="nicid" type="text" size="3" />
+      </td></tr>
+      <tr><td style="vertical-align:middle">4in6 IPv4</td><td><input style="right:10px" id="tunnel4in6addrv4" name="tunnel4in6addrv4" type="text" size="20" /></td></tr>
+    </table>
+    <div class="addable" data-min="1" data-max="1" data-object="olsr6config" data-objectify="1">
+        <!--
+        <div><span><input name="olsrd4enabled" type="checkbox" /></span> Enable OLSR daemon</div>
+        <div class="clear"></div><br><div class="clear"></div>
+        <div><span><input name="olsrd4runonboot" type="checkbox" /></span> Run OLSR daemon<br>(on boot, if enabled)</div>
+        <div class="clear"></div><br><div class="clear"></div>
+        -->
+        <span><b><u>Interfaces:</u></b></span>
+        <div class="addable-template" style="padding-top:0px;">
+            <div class="multi">
+                <div>Enable: <input name="enabled" type="checkbox" onclick="validate()" /></div>
+                <div>Interface: <input id="olsrv6intf" name="olsrinterface" size="5" disabled /></div>
+                <div>Address: <input name="ipv6address" size="25" disabled /></div>
+                <div id="olsrd4mainip"></div>
+            </div>
+        </div>
+        <div class="addable-container"></div>
+        <!-- although hidden, this add-button needs to exist! //-->
+        <button type="button" class="addable-add" style="position:absolute;right:0px;opacity:0.0;filter:alpha(opacity=0);" disabled></button>
+    </div>
+</fieldset>
+
 &nbsp;
 <script>
 function colors() {

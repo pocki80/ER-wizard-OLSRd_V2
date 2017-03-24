@@ -2,7 +2,7 @@
 
 #
 # EdgeMAX Wizard "ER-wizard-OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
-# Version 20170322/pkg-0.4/oonf-0.13.0
+# Version 20170324/pkg-0.4/oonf-0.13.0
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: OLSRd_V2
 #
@@ -4911,7 +4911,7 @@ fi
 dpkg -i /tmp/$packagefile >>$log
 rm -f /tmp/$packagefile >>$log
 
-# remove installtion block
+# remove installation block
 sed -i '/^#base64begin/,/^#base64end$/d' $0
 # !dont edit or remove this comment!
 #base64end
@@ -4984,7 +4984,6 @@ load () {
     # end
     ####### wizard version check against github
 
-
     ####### olsrd version check
     # 
     if [ $(ps ax | grep olsrd2 | grep olsrd2.conf | grep -v grep | wc -l) == "1" ]; then
@@ -4996,7 +4995,38 @@ load () {
     fi
     # end
     ####### olsrd version check
-    
+
+    ####### olsrd v6 insterface list
+    # 
+    olsr6meshif=$(awk -F= '/interface=/ {print $2}' /config/olsrd2/olsrd2.conf | tr -d \])
+
+    # get all running ethernet interfaces in format eth0;192.168.1.1/24
+    olsr6interfaces=''
+    v6interfacelist=$(ip -f inet6 addr  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";" | grep -iv switch)
+#lo;2a02:61:a9e:21::1/64
+#eth0;fe80::822a:a8ff:fe5d:fa99/64
+#eth3;fe80::822a:a8ff:fe5d:fa9c/64
+#eth0.6@eth0;2a02:61:a9e:21::51de:b00b/64
+#eth0.1100@eth0;fe80::822a:a8ff:fe5d:fa99/64
+    for v6if in $v6interfacelist; do
+        v6ifinterface=$(echo $v6if | cut -d";" -f1)
+        v6ifaddress=$(echo $v6if | cut -d";" -f2)
+        v6ifinterface=$(echo ${v6ifinterface} | cut -d@ -f1)
+        intfstatus=''
+        for mesh in $olsr6meshif; do
+            echo "Check -"$mesh"- against -"${v6ifinterface}"- ..."
+            if [[ "$mesh" == "${v6ifinterface}" ]]; then
+                echo "true!"
+                intfstatus='"enabled":"on",'
+            fi
+        done
+        olsr6interfaces=$olsr6interfaces'{'$intfstatus'"olsrv6intf":"'${v6ifinterface}'","ipv6address":"'${v6ifaddress}'"},'
+    done
+    olsr6interfaces=${olsr6interfaces%","}
+
+    # end
+    ####### olsrd v6 insterface list
+
     # get all variables together for output
     echo -n "{\"success\":\"1\",\"data\":{ $packagestatus $updatestatus },"
     echo    " \"definition\":{ }}"
