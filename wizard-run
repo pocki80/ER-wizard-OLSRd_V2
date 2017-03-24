@@ -4998,25 +4998,18 @@ load () {
 
     ####### olsrd v6 insterface list
     # 
+    # get activated interfaces from olsrd2.conf
     olsr6meshif=$(awk -F= '/interface=/ {print $2}' /config/olsrd2/olsrd2.conf | tr -d \])
-
-    # get all running ethernet interfaces in format eth0;192.168.1.1/24
     olsr6interfaces=''
+    # get all running ethernet interfaces in format eth0;192.168.1.1/24
     v6interfacelist=$(ip -f inet6 addr  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";" | grep -iv switch)
-#lo;2a02:61:a9e:21::1/64
-#eth0;fe80::822a:a8ff:fe5d:fa99/64
-#eth3;fe80::822a:a8ff:fe5d:fa9c/64
-#eth0.6@eth0;2a02:61:a9e:21::51de:b00b/64
-#eth0.1100@eth0;fe80::822a:a8ff:fe5d:fa99/64
     for v6if in $v6interfacelist; do
         v6ifinterface=$(echo $v6if | cut -d";" -f1)
         v6ifaddress=$(echo $v6if | cut -d";" -f2)
         v6ifinterface=$(echo ${v6ifinterface} | cut -d@ -f1)
         intfstatus=''
         for mesh in $olsr6meshif; do
-            echo "Check -"$mesh"- against -"${v6ifinterface}"- ..."
             if [[ "$mesh" == "${v6ifinterface}" ]]; then
-                echo "true!"
                 intfstatus='"enabled":"on",'
             fi
         done
@@ -5028,7 +5021,7 @@ load () {
     ####### olsrd v6 insterface list
 
     # get all variables together for output
-    echo -n "{\"success\":\"1\",\"data\":{ $packagestatus $updatestatus },"
+    echo -n "{\"success\":\"1\",\"data\":{ $packagestatus $updatestatus ,$olsr6interfaces},"
     echo    " \"definition\":{ }}"
 }
 
