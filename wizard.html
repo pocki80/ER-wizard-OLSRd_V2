@@ -2,7 +2,7 @@
 
 EdgeMAX Wizard "OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201703244
+versioninfo=201703245
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 
 -->
@@ -15,8 +15,8 @@ versioninfo=201703244
 </legend>
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
   <table border="0">
-    <tr><td style="vertical-align:middle">olsrd2 Status:</td><td><input style="right:10px" id="olsrd2status" name="olsrd2status" type="text" size="60" disabled /></td></tr>
-    <tr><td style="vertical-align:middle">Update Info:</td><td><input style="right:10px" id="updatestatus" name="updatestatus" type="text" size="60" disabled /></td></tr>
+    <tr><td style="vertical-align:middle">OLSRd2 Status:</td><td><input style="right:10px" id="olsrd2status" name="olsrd2status" type="text" size="60" disabled /></td></tr>
+    <tr><td style="vertical-align:middle">Update Info:  </td><td><input style="right:10px" id="updatestatus" name="updatestatus" type="text" size="60" disabled /></td></tr>
   </table>
   <br>
   <input id="updatefromgithub" name="updatefromgithub"  type="checkbox" /><span> Upgrade Wizard from GitHub (online only) on 'Apply'</span><br>
@@ -26,12 +26,18 @@ versioninfo=201703244
 <fieldset id="ipv6olsrd" name="ipv6olsrd" class="primary expanded">
     <legend>OLSRd2 IPv6</legend>
     <table border="0">
-      <tr><td style="vertical-align:middle">Node-ID </td><td><input style="right:10px" id="nodeid" name="nodeid" type="text" size="10" /></td></tr>
-      <tr><td style="vertical-align:middle">Router und NIC ID </td>
-         <td><input style="right:10px" id="routerid" name="routerid" type="text" size="5" /><input style="right:10px" id="nicid" name="nicid" type="text" size="3" />
-      </td></tr>
+      <tr><td style="vertical-align:middle">Node-ID </td><td><input style="right:10px" id="nodeiddec" name="nodeiddec" type="text" size="10" /></td></tr>
+      <tr><td style="vertical-align:middle">Node-ID HEX </td><td><input style="right:10px" id="nodeidhex" name="nodeidnex" type="text" size="10" disabled /> (only Info)</td></tr>
+
+      <tr><td style="vertical-align:middle">Router-ID </td><td><input style="right:10px" id="routeriddec" name="routeriddec" type="text" size="10" /></td></tr>
+      <tr><td style="vertical-align:middle">Router-ID HEX </td><td><input style="right:10px" id="routeridhex" name="routeridhex" type="text" size="10" disabled /> (only Info)</td></tr>
+
+      <tr><td style="vertical-align:middle">NIC-ID </td><td><input style="right:10px" id="niciddec" name="niciddec" type="text" size="10" /></td></tr>
+      <tr><td style="vertical-align:middle">NIC-ID HEX </td><td><input style="right:10px" id="nicidhex" name="nicidhex" type="text" size="10" disabled /> (only Info)</td></tr>
+
       <tr><td style="vertical-align:middle">4in6 IPv4</td><td><input style="right:10px" id="tunnel4in6addrv4" name="tunnel4in6addrv4" type="text" size="20" /></td></tr>
     </table>
+
     <div class="addable" data-min="1" data-max="1" data-object="olsr6config" data-objectify="1">
         <!--
         <div><span><input name="olsrd4enabled" type="checkbox" /></span> Enable OLSR daemon</div>
@@ -44,8 +50,7 @@ versioninfo=201703244
             <div class="multi">
                 <div>Enable:    <input name="enabled" type="checkbox" onclick="validate()" /></div>
                 <div>Interface: <input id="olsrinterface" name="olsrv6intf" size="5" disabled /></div>
-                <div>Address:   <input name="ipv6address" size="25" disabled /></div>
-                <div id="olsrd4mainip"></div>
+                <div>Address:   <input name="ipv6address" size="35" disabled /></div>
             </div>
         </div>
         <div class="addable-container"></div>
@@ -61,10 +66,8 @@ function colors() {
     input.style.color = "black";
     if (input.value.match(/error/)) {
         input.style.color = "red";
-        //disable();
     } else if (input.value.match(/success/)) {
         input.style.color = "green";
-        //enable();
     }
     var input = document.getElementById('updatestatus');
     input.style.color = "black";
@@ -72,13 +75,25 @@ function colors() {
     if (input.value.match(/new version available/)) {
         document.getElementById('updatefromgithub').disabled = false;
         input.style.color = "red";
-        //disable();
     } else if (input.value.match(/up-to-date/)) {
         input.style.color = "green";
-        //enable();
     } 
     document.getElementById('updatestatus').disabled = true;
     document.getElementById('olsrd2status').disabled = true;
+
+    var v6nodes = document.getElementById("ipv6olsrd").getElementsByTagName('*');
+    for(var i=0; i<v6nodes.length; i++) {
+        if (v6nodes[i].name == "olsrv6intf") {
+            v6nodes[i].disabled = true;
+        } else if (v6nodes[i].name == "ipv6address") {
+            v6nodes[i].disabled = true;
+            if (v6nodes[i].value.match(/fe80::/)) {
+                v6nodes[i].style.color = "grey";
+            } else {
+                v6nodes[i].style.color = "black";
+            }
+        }
+    }
 }
 function validate() {
 }

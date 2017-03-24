@@ -4996,6 +4996,41 @@ load () {
     # end
     ####### olsrd version check
 
+    # try to extract node-id from one of current ipv6 addresses, take 1st found
+    # can be    2a02:61:nnnn::
+    # cannot be 2a02:61:0:: or 2a02:61::, thus can't be 2a02:61:0:ff: or 2a02:61:0:ee:
+    nodeidfromiphex=$(ip -f inet6 addr | grep inet6 | grep global | grep -vE "2a02:61:0:|2a02:61::" | grep -oE "2a02:61:.{3,9}" | awk -F: {'print $3'} | head -n 1)
+    if [ "$nodeidfromiphex" ] && [ "$nodeidfromiphex" != "0" ]; then
+        #most likely found the correct id
+        nodeidfromipdec=$((16#$nodeidfromiphex))
+        subnetfromiphex=$(ip -f inet6 addr | grep inet6 | grep global | grep -vE "2a02:61:0:|2a02:61::" | grep -oE "2a02:61:$nodeidfromiphex:.{2,4}" | awk -F: {'print $4'} | head -n 1)
+        if [ ! "$nodeidfromiphex" ]; then
+            subnetfromiphex="0"
+        fi
+        # fill up to 4 digits
+        subnethex=$(printf %04d $subnetfromiphex)
+        # extract route-rid and nicid
+        routeridhex=${subnethex:0:3}
+        nicidhex=${subnethex:3:1}
+        # remove leeding zeros
+        routeridhex=${routeridhex#0*0}
+        # convert to decimal
+        routeriddec=$((0x$routeridhex))
+        niciddec=$((0x$nicidhex))
+    else
+        #not found from local interfaces
+        nodeidfromiphex="0"
+        nodeidfromipdec="0"
+        routeridhex="0"
+        routeriddec="0"
+        nicidhex="0"
+        niciddec="0"
+    fi
+    # take care that is matches olsrd2.conf!!
+    nodenumbers=',"nodeiddec":"'$nodeidfromipdec'", "nodeidhex":"'$nodeidfromiphex'"'
+    nodenumbers=$nodenumbers',"routeridhex":"'$routeridhex'", "routeriddec":"'$routeriddec'"'
+    nodenumbers=$nodenumbers',"nicidhex":"'$nicidhex'", "niciddec":"'$niciddec'"'
+
     ####### olsrd v6 insterface list
     # 
     # get activated interfaces from olsrd2.conf
@@ -5021,8 +5056,10 @@ load () {
     ####### olsrd v6 insterface list
 
     # get all variables together for output
-    echo -n "{\"success\":\"1\",\"data\":{ $packagestatus $updatestatus ,\"olsr6config\":[$olsr6interfaces]},"
-    echo    " \"definition\":{ }}"
+    olsr6config=",\"olsr6config\":[$olsr6interfaces]}"
+
+    echo -n "{\"success\":\"1\",\"data\":{ $packagestatus $updatestatus $nodenumbers $olsr6config"
+    echo    ",\"definition\":{ }}"
 }
 
 # function called when you click apply
