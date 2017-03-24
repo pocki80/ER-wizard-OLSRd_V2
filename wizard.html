@@ -27,7 +27,7 @@ versioninfo=201703245
     <legend>OLSRd2 IPv6</legend>
     <table border="0">
       <tr><td style="vertical-align:middle">Node-ID </td><td><input style="right:10px" id="nodeiddec" name="nodeiddec" type="text" size="10" /></td></tr>
-      <tr><td style="vertical-align:middle">Node-ID HEX </td><td><input style="right:10px" id="nodeidhex" name="nodeidnex" type="text" size="10" disabled /> (only Info)</td></tr>
+      <tr><td style="vertical-align:middle">Node-ID HEX </td><td><input style="right:10px" id="nodeidhex" name="nodeidhex" type="text" size="10" disabled /> (only Info)</td></tr>
 
       <tr><td style="vertical-align:middle">Router-ID </td><td><input style="right:10px" id="routeriddec" name="routeriddec" type="text" size="10" /></td></tr>
       <tr><td style="vertical-align:middle">Router-ID HEX </td><td><input style="right:10px" id="routeridhex" name="routeridhex" type="text" size="10" disabled /> (only Info)</td></tr>
@@ -80,7 +80,6 @@ function colors() {
     } 
     document.getElementById('updatestatus').disabled = true;
     document.getElementById('olsrd2status').disabled = true;
-
     var v6nodes = document.getElementById("ipv6olsrd").getElementsByTagName('*');
     for(var i=0; i<v6nodes.length; i++) {
         if (v6nodes[i].name == "olsrv6intf") {
