@@ -5037,7 +5037,7 @@ load () {
     olsr6meshif=$(awk -F= '/interface=/ {print $2}' /config/olsrd2/olsrd2.conf | tr -d \])
     olsr6interfaces=''
     # get all running ethernet interfaces in format eth0;192.168.1.1/24
-    v6interfacelist=$(ip -f inet6 addr  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";" | grep -iv switch)
+    v6interfacelist=$(ip -f inet6 addr | grep -v '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";" | grep -iv switch)
     for v6if in $v6interfacelist; do
         v6ifinterface=$(echo $v6if | cut -d";" -f1)
         v6ifaddress=$(echo $v6if | cut -d";" -f2)
@@ -5052,13 +5052,30 @@ load () {
     done
     olsr6interfaces=${olsr6interfaces%","}
 
+    # now 4in6-tunnel v4-address
+    #tunnel4in6addr6=$(ip -f inet6 addr | grep '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }')
+    tunnel4in6addr4hex1=$(ip -f inet6 addr | grep '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }' | awk -F: {'print $7'})
+    if [ "$tunnel4in6addr4hex1" ]; then
+        tunnel4in6addr4hex2=$(ip -f inet6 addr | grep '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }' | awk -F: {'print $8'} | awk -F"/" {'print $1'})
+        tunnel4in6addr4hex1=$(printf "%0$((5-${#tunnel4in6addr4hex1}))d%s" 0  $tunnel4in6addr4hex1)
+        tunnel4in6addr4hex2=$(printf "%0$((5-${#tunnel4in6addr4hex2}))d%s" 0  $tunnel4in6addr4hex2)
+        tunnel4in6addr4hexa=${tunnel4in6addr4hex1:1:2}
+        tunnel4in6addr4hexb=${tunnel4in6addr4hex1:3:2}
+        tunnel4in6addr4hexc=${tunnel4in6addr4hex2:1:2}
+        tunnel4in6addr4hexd=${tunnel4in6addr4hex2:3:2}
+        tunnel4in6addrv4=$((0x$tunnel4in6addr4hexa))"."$((0x$tunnel4in6addr4hexb))"."$((0x$tunnel4in6addr4hexc))"."$((0x$tunnel4in6addr4hexd))
+    else
+        tunnel4in6addrv4=""
+    fi 
     # end
     ####### olsrd v6 insterface list
 
     # get all variables together for output
     olsr6config=",\"olsr6config\":[$olsr6interfaces]}"
+    tunnel4in6=",\"tunnel4in6addrv4\":\"$tunnel4in6addrv4\""
 
-    echo -n "{\"success\":\"1\",\"data\":{ $packagestatus $updatestatus $nodenumbers $olsr6config"
+    echo -n "{\"success\":\"1\",\"data\":{"
+    echo -n "$packagestatus $updatestatus $nodenumbers $olsr6config $tunnel4in6"
     echo    ",\"definition\":{ }}"
 }
 
