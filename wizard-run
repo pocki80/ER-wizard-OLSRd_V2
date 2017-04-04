@@ -5077,8 +5077,22 @@ load () {
     currentnodeidaddress=$(ip -6 addr show lo | grep global | grep '2a02:61:' | grep -vE "2a02:61:0:|2a02:61::" | awk {'print $2'} | head -n 1)
     # get node id from map data and form IPv6-User-Block address
     nodeid=$(curl -4s --connect-timeout 2 http://ff.cybercomm.at/mynodeid.php 2>/dev/null)
+
+    # use router/nic id from existing ipv6 address if exist
+    #routeridhex="1"
+    #nicidhex="0"
+    if [ "$routeridhex$nicidhex" == "00" ]; then
+        network=""
+    else
+        network=$(($routeridhex$nicidhex))":"
+    fi
+
+    if [ "$nodeidfromipdec" == "0" ]; then
+        # currently no ipv6 with nodeid exists, so try to use nodeid-lookup
+        echo -n "" >/dev/null
+    fi
     if [ $(($nodeid)) \> 0 ]; then
-        nodeidaddress=$(echo "2a02:61:"$(printf '%x' $nodeid)"::1/128")
+        nodeidaddress=$(echo "2a02:61:"$(printf '%x' $nodeid)":"$network":1/128")
     else
         nodeidaddress="err: Node-ID not available"
     fi
