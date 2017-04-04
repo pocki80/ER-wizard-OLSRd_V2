@@ -5207,9 +5207,9 @@ apply () {
         docommands="1"
         executecmd1="delete interfaces loopback lo address "$eui64address
     fi
-    if [ "$eui4addron" ] && [ "$currenteui64address" != "$eui64address" ] && [ "$hexneu" ]; then
+    if [ "$eui4addron" == "on" ] && [ "$currenteui64address" != "$eui64address" ] && [ "$hexneu" ]; then
         # enable address for loopback!
-        echo "enable address for loopback via command wrapper" >> $log
+        echo "enable address "$eui64address" for loopback via command wrapper" >> $log
         docommands="1"
         executecmd2="set interfaces loopback lo address "$eui64address
     fi
@@ -5224,7 +5224,7 @@ apply () {
     ####### check lo-NODEID address assignement
     #
     ### NODEID
-    #currentnodeidaddress=$(ip -6 addr show lo | grep global | grep '2a02:61:' | grep -vE "2a02:61:0:|2a02:61::" | awk {'print $2'} | head -n 1)
+    currentaddressfound=$(ip -6 addr show lo | grep global | grep "$currentnodeidaddress" | awk {'print $2'} | wc -l)
     if [ "$currentnodeidaddress" ] && [ "$nodeidaddress" ] && [ "$currentnodeidaddress" != "$nodeidaddress" ] && [ $(echo "$currentnodeidaddress" | grep -i "err" | wc -l) == "0" ] && [ $(echo "$nodeidaddress" | grep -i "err" | wc -l) == "0" ] && [[ "$nodeidaddron" == "on" ]]; then
         echo "NodeID-Address changed from "$currentnodeidaddress" to "$nodeidaddress"..." >>$log
         # what now?
@@ -5233,7 +5233,7 @@ apply () {
         docommands="1"
         executecmd3="delete interfaces loopback lo address "$currentnodeidaddress
     fi
-    if [[ "$nodeidaddron" != "on" ]] && [ "$currentnodeidaddress" ] && [ $(echo "$currentnodeidaddress" | grep -i "err" | wc -l) == "0" ]; then
+    if [[ "$nodeidaddron" != "on" ]] && [ "$currentaddressfound" != "0" ] && [ "$currentnodeidaddress" ] && [ $(echo "$currentnodeidaddress" | grep -i "err" | wc -l) == "0" ]; then
         # what now?
         # remove old currentnodeidaddress?
         echo "Unassign old Address "$currentnodeidaddress"..." >>$log
