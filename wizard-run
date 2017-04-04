@@ -5007,7 +5007,6 @@ load () {
     # end
     ####### check for autostart
 
-
     # try to extract node-id from one of current ipv6 addresses, take 1st found
     # can be    2a02:61:nnnn::
     # cannot be 2a02:61:0:: or 2a02:61::, thus can't be 2a02:61:0:ff: or 2a02:61:0:ee:
@@ -5038,10 +5037,6 @@ load () {
         nicidhex="0"
         niciddec="0"
     fi
-    # take care that is matches olsrd2.conf!!
-    nodenumbers=',"nodeiddec":"'$nodeidfromipdec'", "nodeidhex":"'$nodeidfromiphex'"'
-    nodenumbers=$nodenumbers',"routeridhex":"'$routeridhex'", "routeriddec":"'$routeriddec'"'
-    nodenumbers=$nodenumbers',"nicidhex":"'$nicidhex'", "niciddec":"'$niciddec'"'
 
     ####### olsrd v6 insterface list
     # 
@@ -5101,17 +5096,28 @@ load () {
 
     if [ "$nodeidfromipdec" == "0" ]; then
         # currently no ipv6 with nodeid exists, so try to use nodeid-lookup
-        echo -n "" >/dev/null
+        if [ $(($nodeid)) \> 0 ]; then
+            nodeidfromipdec=$(($nodeid))
+            nodeidfromiphex=$(printf "%x" $(($nodeidfromipdec)))
+        fi
     fi
     if [ $(($nodeid)) \> 0 ]; then
         nodeidaddress=$(echo "2a02:61:"$(printf '%x' $nodeid)":"$network":1/128")
     else
-        nodeidaddress="err: Node-ID not available"
+        if [ "$nodeidfromipdec" != "0" ]; then
+            nodeidaddress=$(echo "2a02:61:"$(printf '%x' $nodeidfromipdec)":"$network":1/128")
+        else
+            nodeidaddress="err: Node-ID not available"
+        fi
     fi
-    nodeidaddr=",\"nodeidaddress\":\"$nodeidaddress\""
+    nodeidaddr=",\"nodeidaddress\":\"$nodeidaddress\",\"currentnodeidaddress\":\"$nodeidaddress\""
     if [ "$currentnodeidaddress" == "$nodeidaddress" ]; then
         nodeidaddr=$nodeidaddr",\"nodeidaddron\":\"on\""
     fi
+    # take care that is matches olsrd2.conf!!
+    nodenumbers=',"nodeiddec":"'$nodeidfromipdec'", "nodeidhex":"'$nodeidfromiphex'"'
+    nodenumbers=$nodenumbers',"routeridhex":"'$routeridhex'", "routeriddec":"'$routeriddec'"'
+    nodenumbers=$nodenumbers',"nicidhex":"'$nicidhex'", "niciddec":"'$niciddec'"'
 
     ### EUI64
     # currently assigned
@@ -5179,6 +5185,101 @@ apply () {
     # end
     ####### wizard manual update from github
 
+    eui4addron=$(jq -M -r '.eui4addron' $INPUT)
+    ####### check lo-EUI64 address assignement
+    #
+    ### EUI64
+    # currently assigned
+    currenteui64address=$(ip -6 addr show lo | grep global | grep '2a02:61:0:ff:' | awk {'print $2'} | head -n 1)
+    # EUI64 suitable for this unique EdgeRouter device (turn bit-7 of byte-1)
+    if [ $(ip -6 link show switch0 | grep link/ether | awk {'print $2'} | wc -w) == "1" ]; then
+        D2B=({0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1})
+        byte=$((16#$(ip -6 link show switch0 | grep link/ether | awk {'print $2'} | awk -F: {'print $1'})))
+        bit=${D2B[$byte]}
+        hexneu=$(printf '%02x' "$((2#$(echo -n ${bit:0:6}; [ ${bit:6:1} == "0" ] && echo -n "1" || echo -n "0"; echo ${bit:7:1})))")
+        eui64address=$(ip -6 link show switch0 | grep link/ether | awk {'print $2'} | awk -F: {'print "2a02:61:0:ff:'$hexneu'"$2":"$3"ff:fe"$4":"$5$6"/128";'})
+    else
+        eui64address="err: MAC address of switch0 not found"
+    fi
+    if [ "$eui4addron" == "" ] && [ "$currenteui64address" != "" ] &&  [ "$currenteui64address" == "$eui64address" ]; then
+        # remove address from loopback!
+echo "remove address from loopback via command wrapper" >> $log
+cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
+tfile=$(mktemp)
+(
+$cmd begin
+ret=0
+if [ $ret == 0 ]; then
+    $cmd delete interfaces loopback lo address $eui64address || ret=1
+fi
+if [ $ret == 0 ]; then
+    $cmd commit || ret=1
+fi
+if [ $ret == 0 ]; then
+    $cmd save || ret=1
+fi
+$cmd end
+exit $ret
+) >$tfile 2>&1
+ret=$?
+output=$(cat $tfile)
+rm -f $tfile
+echo $output >> $log
+    fi
+    if [ "$eui4addron" ] && [ "$currenteui64address" != "$eui64address" ] && [ "$hexneu" ]; then
+        # enable address for loopback!
+echo "enable address for loopback via command wrapper" >> $log
+cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
+tfile=$(mktemp)
+(
+$cmd begin
+ret=0
+if [ $ret == 0 ]; then
+    $cmd set interfaces loopback lo address $eui64address || ret=1
+fi
+if [ $ret == 0 ]; then
+    $cmd commit || ret=1
+fi
+if [ $ret == 0 ]; then
+    $cmd save || ret=1
+fi
+$cmd end
+exit $ret
+) >$tfile 2>&1
+ret=$?
+output=$(cat $tfile)
+rm -f $tfile
+echo $output >> $log
+    fi
+    # 
+    ####### ipv6 addresses check
+    # end
+    ####### check lo-EUI64 address assignement
+
+    nodeidaddron=$(jq -M -r '.nodeidaddron' $INPUT)
+    nodeidaddress=$(jq -M -r '.nodeidaddress' $INPUT)
+    currentnodeidaddress=$(jq -M -r '.currentnodeidaddress' $INPUT)
+    ####### check lo-NODEID address assignement
+    #
+    ### NODEID
+    
+    #currentnodeidaddress=$(ip -6 addr show lo | grep global | grep '2a02:61:' | grep -vE "2a02:61:0:|2a02:61::" | awk {'print $2'} | head -n 1)
+    
+    if [ "$currentnodeidaddress" != "$nodeidaddress" ] && [ $(echo "$nodeidaddress" | grep -i "err" | wc -l) == "0" ]; then
+        echo "NodeID-Address changed from "$currentnodeidaddress" to "$nodeidaddress"..." >>$log
+        # what now?
+        echo -n "" >/dev/null
+    fi
+    if [[ "$nodeidaddron" == "on" ]]; then
+        # what now?
+        echo -n "" >/dev/null
+    fi
+    
+    ####### ipv6 addresses check
+    # end
+    ####### check lo-NODEID address assignement
+
+
     ####### check autostart
     # 
     autostart=$(jq -M -r '.autostart' $INPUT)
@@ -5219,7 +5320,6 @@ apply () {
     fi
     # end
     ####### check autostart
-
     
     ####### restart daemon
     # 
