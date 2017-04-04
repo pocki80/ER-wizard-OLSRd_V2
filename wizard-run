@@ -5201,7 +5201,7 @@ apply () {
     else
         eui64address="err: MAC address of switch0 not found"
     fi
-    if [ "$eui4addron" == "" ] && [ "$currenteui64address" != "" ] &&  [ "$currenteui64address" == "$eui64address" ]; then
+    if [ "$eui4addron" != "on" ] && [ "$currenteui64address" ] &&  [ "$currenteui64address" == "$eui64address" ]; then
         # remove address from loopback!
         echo "remove address from loopback via command wrapper" >> $log
         docommands="1"
@@ -5240,7 +5240,7 @@ apply () {
         docommands="1"
         executecmd4="delete interfaces loopback lo address "$currentnodeidaddress
     fi
-    if [[ "$nodeidaddron" == "on" ]] && [ "$nodeidaddress" ] && [ $(echo "$nodeidaddress" | grep -i "err" | wc -l) == "0" ]; then
+    if [[ "$nodeidaddron" == "on" ]] && [ "$nodeidaddress" ] && [ $(echo "$nodeidaddress" | grep -i "err" | wc -l) == "0" ] && [ $(ip -6 addr show lo | grep global | grep "$nodeidaddress" | wc -l) == "0" ]; then
         # what now?
         # apply nodeidaddress if not yet applied? 
         echo "Apply new Address "$nodeidaddress"..." >>$log
