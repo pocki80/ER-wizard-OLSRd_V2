@@ -2,7 +2,7 @@
 
 EdgeMAX Wizard "OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201704045
+versioninfo=201704046
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 
 -->
@@ -27,18 +27,14 @@ versioninfo=201704045
 <fieldset id="ipv6olsrd" name="ipv6olsrd" class="primary expanded">
     <legend>OLSRd2 IPv6</legend>
     <table border="0">
-      <tr><td style="vertical-align:middle">lo-Adresse EUI64 </td> <td colspan="2"><input style="right:10px" id="eui4address" name="eui4address" type="text" size="40" />
+      <tr><td style="vertical-align:middle">lo-Adresse EUI64 </td> <td><input style="right:10px" id="eui4address" name="eui4address" type="text" size="40" />
                <input id="eui4addron" name="eui4addron"  type="checkbox" /><span> Assigned </span><td></tr>
-      <tr><td style="vertical-align:middle">lo-Adresse NodeID </td><td colspan="2"><input style="right:10px" id="nodeidaddress" name="nodeidaddress" type="text" size="40" />
+      <tr><td style="vertical-align:middle">lo-Adresse NodeID </td><td><input style="right:10px" id="nodeidaddress" name="nodeidaddress" type="text" size="40" />
                <input style="right:10px" id="currentnodeidaddress" name="currentnodeidaddress" type="hidden" size="40" />
                <input id="nodeidaddron" name="nodeidaddron"  type="checkbox" /><span> Assigned </span><td></tr>
-      <tr><td style="vertical-align:middle">Node-ID </td><td><input style="right:10px" id="nodeiddec" name="nodeiddec" type="text" size="10" /></td><td>
-                                                             <input style="right:10px" id="nodeidhex" name="nodeidhex" type="text" size="6" disabled /></td></tr>
-      <tr><td style="vertical-align:middle">Router-ID </td><td><input style="right:10px" id="routeriddec" name="routeriddec" type="text" size="10" /></td><td>
-                                                               <input style="right:10px" id="routeridhex" name="routeridhex" type="text" size="6" disabled /></td></tr>
-      <tr><td style="vertical-align:middle">NIC-ID </td><td><input style="right:10px" id="niciddec" name="niciddec" type="text" size="10" /></td><td>
-                                                            <input style="right:10px" id="nicidhex" name="nicidhex" type="text" size="6" disabled /></td></tr>
-      <tr><td style="vertical-align:middle">4in6 IPv4 </td><td colspan="2"><input style="right:10px" id="tunnel4in6addrv4" name="tunnel4in6addrv4" type="text" size="20" /></td></tr>
+      <tr><td style="vertical-align:middle">Node/Router/NIC-ID </td><td><input style="right:10px" id="nodeiddec" name="nodeiddec" type="text" size="10" /><input style="right:10px" id="routeriddec" name="routeriddec" type="text" size="4" /><input style="right:10px" id="niciddec" name="niciddec" type="text" size="2" /></td></tr>
+      <tr><td style="vertical-align:middle">...hex...          </td><td><input style="right:10px" id="nodeidhex" name="nodeidhex" type="text" size="6" disabled /><input style="right:10px" id="routeridhex" name="routeridhex" type="text" size="6" disabled /><input style="right:10px" id="nicidhex" name="nicidhex" type="text" size="6" disabled /></td></tr>
+      <tr><td style="vertical-align:middle">4in6 IPv4 </td><td><input style="right:10px" id="tunnel4in6addrv4" name="tunnel4in6addrv4" type="text" size="20" /></td></tr>
     </table>
 
     <div class="addable" data-min="1" data-max="1" data-object="olsr6config" data-objectify="1">
