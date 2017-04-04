@@ -5203,53 +5203,15 @@ apply () {
     fi
     if [ "$eui4addron" == "" ] && [ "$currenteui64address" != "" ] &&  [ "$currenteui64address" == "$eui64address" ]; then
         # remove address from loopback!
-echo "remove address from loopback via command wrapper" >> $log
-cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
-tfile=$(mktemp)
-(
-$cmd begin
-ret=0
-if [ $ret == 0 ]; then
-    $cmd delete interfaces loopback lo address $eui64address || ret=1
-fi
-if [ $ret == 0 ]; then
-    $cmd commit || ret=1
-fi
-if [ $ret == 0 ]; then
-    $cmd save || ret=1
-fi
-$cmd end
-exit $ret
-) >$tfile 2>&1
-ret=$?
-output=$(cat $tfile)
-rm -f $tfile
-echo $output >> $log
+        echo "remove address from loopback via command wrapper" >> $log
+        docommands="1"
+        executecmd1="delete interfaces loopback lo address "$eui64address
     fi
     if [ "$eui4addron" ] && [ "$currenteui64address" != "$eui64address" ] && [ "$hexneu" ]; then
         # enable address for loopback!
-echo "enable address for loopback via command wrapper" >> $log
-cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
-tfile=$(mktemp)
-(
-$cmd begin
-ret=0
-if [ $ret == 0 ]; then
-    $cmd set interfaces loopback lo address $eui64address || ret=1
-fi
-if [ $ret == 0 ]; then
-    $cmd commit || ret=1
-fi
-if [ $ret == 0 ]; then
-    $cmd save || ret=1
-fi
-$cmd end
-exit $ret
-) >$tfile 2>&1
-ret=$?
-output=$(cat $tfile)
-rm -f $tfile
-echo $output >> $log
+        echo "enable address for loopback via command wrapper" >> $log
+        docommands="1"
+        executecmd2="set interfaces loopback lo address "$eui64address
     fi
     # 
     ####### ipv6 addresses check
@@ -5262,23 +5224,82 @@ echo $output >> $log
     ####### check lo-NODEID address assignement
     #
     ### NODEID
-    
     #currentnodeidaddress=$(ip -6 addr show lo | grep global | grep '2a02:61:' | grep -vE "2a02:61:0:|2a02:61::" | awk {'print $2'} | head -n 1)
-    
-    if [ "$currentnodeidaddress" != "$nodeidaddress" ] && [ $(echo "$nodeidaddress" | grep -i "err" | wc -l) == "0" ]; then
+    if [ "$currentnodeidaddress" ] && [ "$nodeidaddress" ] && [ "$currentnodeidaddress" != "$nodeidaddress" ] && [ $(echo "$currentnodeidaddress" | grep -i "err" | wc -l) == "0" ] && [ $(echo "$nodeidaddress" | grep -i "err" | wc -l) == "0" ] && [[ "$nodeidaddron" == "on" ]]; then
         echo "NodeID-Address changed from "$currentnodeidaddress" to "$nodeidaddress"..." >>$log
         # what now?
-        echo -n "" >/dev/null
+        # remove old currentnodeidaddress?
+        echo "Remove old Address "$currentnodeidaddress"..." >>$log
+        docommands="1"
+        executecmd3="delete interfaces loopback lo address "$currentnodeidaddress
     fi
-    if [[ "$nodeidaddron" == "on" ]]; then
+    if [[ "$nodeidaddron" != "on" ]] && [ "$currentnodeidaddress" ] && [ $(echo "$currentnodeidaddress" | grep -i "err" | wc -l) == "0" ]; then
         # what now?
-        echo -n "" >/dev/null
+        # remove old currentnodeidaddress?
+        echo "Unassign old Address "$currentnodeidaddress"..." >>$log
+        docommands="1"
+        executecmd4="delete interfaces loopback lo address "$currentnodeidaddress
+    fi
+    if [[ "$nodeidaddron" == "on" ]] && [ "$nodeidaddress" ] && [ $(echo "$nodeidaddress" | grep -i "err" | wc -l) == "0" ]; then
+        # what now?
+        # apply nodeidaddress if not yet applied? 
+        echo "Apply new Address "$nodeidaddress"..." >>$log
+        docommands="1"
+        executecmd5="set interfaces loopback lo address "$nodeidaddress
     fi
     
     ####### ipv6 addresses check
     # end
     ####### check lo-NODEID address assignement
 
+    if [ "$docommands" ]; then
+        echo "Applying script commands..." >>$log
+cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
+tfile=$(mktemp)
+(
+$cmd begin
+ret=0
+if [ $ret == 0 ] && [ "$executecmd1" ]; then
+    $cmd $executecmd1 || ret=1
+fi
+if [ $ret == 0 ] && [ "$executecmd2" ]; then
+    $cmd $executecmd2 || ret=1
+fi
+if [ $ret == 0 ] && [ "$executecmd3" ]; then
+    $cmd $executecmd3 || ret=1
+fi
+if [ $ret == 0 ] && [ "$executecmd4" ]; then
+    $cmd $executecmd4 || ret=1
+fi
+if [ $ret == 0 ] && [ "$executecmd5" ]; then
+    $cmd $executecmd5 || ret=1
+fi
+if [ $ret == 0 ] && [ "$executecmd6" ]; then
+    $cmd $executecmd6 || ret=1
+fi
+if [ $ret == 0 ] && [ "$executecmd7" ]; then
+    $cmd $executecmd7 || ret=1
+fi
+if [ $ret == 0 ] && [ "$executecmd8" ]; then
+    $cmd $executecmd8 || ret=1
+fi
+if [ $ret == 0 ] && [ "$executecmd9" ]; then
+    $cmd $executecmd9 || ret=1
+fi
+if [ $ret == 0 ]; then
+    $cmd commit || ret=1
+fi
+if [ $ret == 0 ]; then
+    $cmd save || ret=1
+fi
+$cmd end
+exit $ret
+) >$tfile 2>&1
+ret=$?
+output=$(cat $tfile)
+rm -f $tfile
+echo $output >> $log
+    fi
 
     ####### check autostart
     # 
