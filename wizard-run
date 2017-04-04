@@ -5084,7 +5084,7 @@ load () {
     fi
     nodeidaddr=",\"nodeidaddress\":\"$nodeidaddress\""
     if [ "$currentnodeidaddress" == "$nodeidaddress" ]; then
-        nodeidaddr=$nodeidaddr",\"nodeidaddresson\":\"on\""
+        nodeidaddr=$nodeidaddr",\"nodeidaddron\":\"on\""
     fi
 
     ### EUI64
@@ -5102,18 +5102,18 @@ load () {
     fi
     eui4addr=",\"eui4address\":\"$eui64address\""
     if [ "$currenteui64address" == "$eui64address" ]; then
-        eui4addr=$eui4addr",\"eui4addresson\":\"on\""
+        eui4addr=$eui4addr",\"eui4addron\":\"on\""
     fi
     # 
     ####### ipv6 addresses check
 
     # get all variables together for output
-    olsr6config=",\"olsr6config\":[$olsr6interfaces]}"
+    olsr6config=",\"olsr6config\":[$olsr6interfaces]"
     tunnel4in6=",\"tunnel4in6addrv4\":\"$tunnel4in6addrv4\""
 
     echo -n "{\"success\":\"1\",\"data\":{"
     echo -n "$packagestatus $updatestatus $nodenumbers $olsr6config $tunnel4in6 $eui4addr $nodeidaddr"
-    echo    ",\"definition\":{ }}"
+    echo    "} ,\"definition\":{ } }"
 }
 
 # function called when you click apply
