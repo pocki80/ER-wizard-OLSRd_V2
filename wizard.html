@@ -2,7 +2,7 @@
 
 EdgeMAX Wizard "OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201703271
+versioninfo=201704040
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 
 -->
@@ -11,7 +11,7 @@ versioninfo=201703271
 </div>
 <legend style="position:absolute;right:0px;padding:5px;">
     <center>EdgeMAX Wizard "OLSRd_V2"<br>created 03/2017 by CPO for FunkFeuer.at<br>
-    Version 20170324/pkg-0.4/oonf-0.13.0</center>
+    Version 20170404/pkg-0.4/oonf-0.13.0</center>
 </legend>
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
   <table border="0">
@@ -26,6 +26,10 @@ versioninfo=201703271
 <fieldset id="ipv6olsrd" name="ipv6olsrd" class="primary expanded">
     <legend>OLSRd2 IPv6</legend>
     <table border="0">
+      <tr><td style="vertical-align:middle">lo-Adresse EUI64</td> <td colspan="2"><input style="right:10px" id="eui4address" name="eui4address" type="text" size="40" />
+               <input id="eui4addresson" name="eui4addresson"  type="checkbox" /><span>Assigned </span><td></tr>
+      <tr><td style="vertical-align:middle">lo-Adresse NodeID</td><td colspan="2"><input style="right:10px" id="nodeidaddress" name="nodeidaddress" type="text" size="40" />
+               <input id="nodeidaddresson" name="nodeidaddresson"  type="checkbox" /><span>Assigned </span><td></tr>
       <tr><td style="vertical-align:middle">Node-ID </td><td><input style="right:10px" id="nodeiddec" name="nodeiddec" type="text" size="10" /></td><td>
                                                              <input style="right:10px" id="nodeidhex" name="nodeidhex" type="text" size="6" disabled /></td></tr>
       <tr><td style="vertical-align:middle">Router-ID </td><td><input style="right:10px" id="routeriddec" name="routeriddec" type="text" size="10" /></td><td>

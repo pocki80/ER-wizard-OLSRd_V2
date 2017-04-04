@@ -2,7 +2,7 @@
 
 #
 # EdgeMAX Wizard "ER-wizard-OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
-# Version 20170324/pkg-0.4/oonf-0.13.0
+# Version 20170404/pkg-0.4/oonf-0.13.0
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: OLSRd_V2
 #
@@ -5070,12 +5070,49 @@ load () {
     # end
     ####### olsrd v6 insterface list
 
+    ####### ipv6 addresses check
+    # 
+    ### NodeID
+    # currently assigned
+    currentnodeidaddress=$(ip -6 addr show lo | grep global | grep '2a02:61:' | grep -vE "2a02:61:0:|2a02:61::" | awk {'print $2'} | head -n 1)
+    # get node id from map data and form IPv6-User-Block address
+    nodeid=$(curl -4s --connect-timeout 2 http://ff.cybercomm.at/mynodeid.php 2>/dev/null)
+    if [ $(($nodeid)) \> 0 ]; then
+        nodeidaddress=$(echo "2a02:61:"$(printf '%x' $nodeid)"::1/128")
+    else
+        nodeidaddress="err: Node-ID not available"
+    fi
+    nodeidaddr=",\"nodeidaddress\":\"$nodeidaddress\""
+    if [ "$currentnodeidaddress" == "$nodeidaddress" ]; then
+        nodeidaddr=$nodeidaddr",\"nodeidaddresson\":\"on\""
+    fi
+
+    ### EUI64
+    # currently assigned
+    currenteui64address=$(ip -6 addr show lo | grep global | grep '2a02:61:0:ff:' | awk {'print $2'} | head -n 1)
+    # EUI64 suitable for this unique EdgeRouter device (turn bit-7 of byte-1)
+    if [ $(ip -6 link show switch0 | grep link/ether | awk {'print $2'} | wc -w) == "1" ]; then
+        D2B=({0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1})
+        byte=$((16#$(ip -6 link show switch0 | grep link/ether | awk {'print $2'} | awk -F: {'print $1'})))
+        bit=${D2B[$byte]}
+        hexneu=$(printf '%02x' "$((2#$(echo -n ${bit:0:6}; [ ${bit:6:1} == "0" ] && echo -n "1" || echo -n "0"; echo ${bit:7:1})))")
+        eui64address=$(ip -6 link show switch0 | grep link/ether | awk {'print $2'} | awk -F: {'print "2a02:61:0:ff:'$hexneu'"$2":"$3"ff:fe"$4":"$5$6"/128";'})
+    else
+        eui64address="err: MAC address of switch0 not found"
+    fi
+    eui4addr=",\"eui4address\":\"$eui64address\""
+    if [ "$currenteui64address" == "$eui64address" ]; then
+        eui4addr=$eui4addr",\"eui4addresson\":\"on\""
+    fi
+    # 
+    ####### ipv6 addresses check
+
     # get all variables together for output
     olsr6config=",\"olsr6config\":[$olsr6interfaces]}"
     tunnel4in6=",\"tunnel4in6addrv4\":\"$tunnel4in6addrv4\""
 
     echo -n "{\"success\":\"1\",\"data\":{"
-    echo -n "$packagestatus $updatestatus $nodenumbers $olsr6config $tunnel4in6"
+    echo -n "$packagestatus $updatestatus $nodenumbers $olsr6config $tunnel4in6 $eui4addr $nodeidaddr"
     echo    ",\"definition\":{ }}"
 }
 
