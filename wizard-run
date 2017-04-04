@@ -5195,7 +5195,7 @@ apply () {
             fi
         fi
         # be sure that daemon is running
-        if [ $(ps aux | grep "olsrd2 " | grep olsrd2.conf | grep -v grep | wc -l) == 0]; then
+        if [ $(ps aux | grep "olsrd2 " | grep olsrd2.conf | grep -v grep | wc -l) == "0" ]; then
             /config/olsrd2/olsrd2 -l /config/olsrd2/olsrd2.conf >>$log 2>>$log
         fi
     else
