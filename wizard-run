@@ -29,12 +29,12 @@ gitbranch="master"
 # DO NOT EDIT BELOW HERE !
 #
 
-echo "EdgeMAX OLSRd_V2 Wizard started $(date +%H:%M:%S.%N)" >>$log
+echo "EdgeMAX OLSRd_V2 Wizard started $(date +%H:%M:%S.%N) - "$$","$BASHPID >>$log
 
 #base64begin 
 # !dont edit or remove this comment!
 # first run of wizard, so load and install package
-echo "Installation started $(date +%H:%M:%S.%N)" >>$log
+echo "Installation started $(date +%H:%M:%S.%N) - "$$","$BASHPID >>$log
 
 # download source package
 # scp ubnt@193.238.158.8:/home/ubnt/ER-OLSRd_V2/builds/0xff-er-olsrd-v2_0.1_mipsel.deb /tmp/0xff-er-olsrd-v2_0.1_mipsel.deb
@@ -4904,7 +4904,7 @@ YFc2uHJW9KetxCC1B374K8UAAAAAAMtPLqO0NbGXAAG96hCAkFjLFLiiscRn+wIAAAAABFla
 " | base64 -d >/tmp/$packagefile
 #filecontentend
 if [[ $? == 0 ]]; then 
-    echo "extracted package file: "$packagefile" without error" >> $log
+    echo "extracted package file: "$packagefile" without error - "$$","$BASHPID >>$log
 else
     echo "extraction of package file failed" >> $log
 fi
@@ -4951,7 +4951,7 @@ onlinecheck () {
 
 # function called when you click the wizard
 load () {
-    echo "Load procedure..." >> $log
+    echo "Load procedure... - "$$","$BASHPID >>$log
 
     ####### wizard version check against github
     # 
@@ -5380,5 +5380,5 @@ case "$ACTION" in
         ;;
 esac
 
-echo "EdgeMAX OLSRd_V2 Wizard ended $(date +%H:%M:%S.%N)" >> $log
-
+echo "EdgeMAX OLSRd_V2 Wizard ended $(date +%H:%M:%S.%N) - "$$","$BASHPID >> $log
+echo "" >> $log
