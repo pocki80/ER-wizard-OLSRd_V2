@@ -5284,24 +5284,24 @@ apply () {
         if [ $(grep -E "^    name-server 2001:4860:4860::8888" /config/config.boot | wc -l) == "0" ]; then
             echo "Apply 1st Google v6-DNS" >>$log
             docommands="1"
-            executecmd6="set system name-server '2001:4860:4860::8888'"
+            executecmd6="set system name-server 2001:4860:4860::8888"
         fi
         if [ $(grep -E "^    name-server 2001:4860:4860::8844" /config/config.boot | wc -l) == "0" ]; then
             echo "Apply 2nd Google v6-DNS" >>$log
             docommands="1"
-            executecmd7="set system name-server '2001:4860:4860::8844'"
+            executecmd7="set system name-server 2001:4860:4860::8844"
         fi
     else
         # check and remove
         if [ $(grep -E "^    name-server 2001:4860:4860::8888" /config/config.boot | wc -l) != "0" ]; then
             echo "Remove 1st Google v6-DNS" >>$log
             docommands="1"
-            executecmd6="delete system name-server '2001:4860:4860::8888'"
+            executecmd6="delete system name-server 2001:4860:4860::8888"
         fi
         if [ $(grep -E "^    name-server 2001:4860:4860::8844" /config/config.boot | wc -l) != "0" ]; then
             echo "Remove 2nd Google v6-DNS" >>$log
             docommands="1"
-            executecmd7="delete system name-server '2001:4860:4860::8844'"
+            executecmd7="delete system name-server 2001:4860:4860::8844"
         fi
     fi
     # end
@@ -5315,30 +5315,39 @@ tfile=$(mktemp)
 $cmd begin
 ret=0
 if [ $ret == 0 ] && [ "$executecmd1" ]; then
+    echo "--"$executecmd1 >>$log
     $cmd $executecmd1 || ret=1
 fi
 if [ $ret == 0 ] && [ "$executecmd2" ]; then
+    echo "--"$executecmd2 >>$log
     $cmd $executecmd2 || ret=1
 fi
 if [ $ret == 0 ] && [ "$executecmd3" ]; then
+    echo "--"$executecmd3 >>$log
     $cmd $executecmd3 || ret=1
 fi
 if [ $ret == 0 ] && [ "$executecmd4" ]; then
+    echo "--"$executecmd4 >>$log
     $cmd $executecmd4 || ret=1
 fi
 if [ $ret == 0 ] && [ "$executecmd5" ]; then
+    echo "--"$executecmd5 >>$log
     $cmd $executecmd5 || ret=1
 fi
 if [ $ret == 0 ] && [ "$executecmd6" ]; then
+    echo "--"$executecmd6 >>$log
     $cmd $executecmd6 || ret=1
 fi
 if [ $ret == 0 ] && [ "$executecmd7" ]; then
+    echo "--"$executecmd7 >>$log
     $cmd $executecmd7 || ret=1
 fi
 if [ $ret == 0 ] && [ "$executecmd8" ]; then
+    echo "--"$executecmd8 >>$log
     $cmd $executecmd8 || ret=1
 fi
 if [ $ret == 0 ] && [ "$executecmd9" ]; then
+    echo "--"$executecmd9 >>$log
     $cmd $executecmd9 || ret=1
 fi
 if [ $ret == 0 ]; then
