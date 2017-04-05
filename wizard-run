@@ -5279,29 +5279,29 @@ apply () {
     googlednson=$(jq -M -r '.googlednson' $INPUT)
     ####### check google dns assignment
     #
-    if [[ "$nodeidaddron" == "on" ]]; then
+    if [[ "$googlednson" == "on" ]]; then
         # check and add
         if [ $(grep -E "^    name-server 2001:4860:4860::8888" /config/config.boot | wc -l) == "0" ]; then
             echo "Apply 1st Google v6-DNS" >>$log
             docommands="1"
-            executecmd6="set system name-server '2001:4860:4860::8888"
+            executecmd6="set system name-server '2001:4860:4860::8888'"
         fi
         if [ $(grep -E "^    name-server 2001:4860:4860::8844" /config/config.boot | wc -l) == "0" ]; then
             echo "Apply 2nd Google v6-DNS" >>$log
             docommands="1"
-            executecmd7="set system name-server '2001:4860:4860::8844"
+            executecmd7="set system name-server '2001:4860:4860::8844'"
         fi
     else
         # check and remove
         if [ $(grep -E "^    name-server 2001:4860:4860::8888" /config/config.boot | wc -l) != "0" ]; then
             echo "Remove 1st Google v6-DNS" >>$log
             docommands="1"
-            executecmd6="delete system name-server '2001:4860:4860::8888"
+            executecmd6="delete system name-server '2001:4860:4860::8888'"
         fi
         if [ $(grep -E "^    name-server 2001:4860:4860::8844" /config/config.boot | wc -l) != "0" ]; then
             echo "Remove 2nc Google v6-DNS" >>$log
             docommands="1"
-            executecmd7="delete system name-server '2001:4860:4860::8844"
+            executecmd7="delete system name-server '2001:4860:4860::8844'"
         fi
     fi
     # end
