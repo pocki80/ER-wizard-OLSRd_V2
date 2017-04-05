@@ -5042,10 +5042,15 @@ load () {
     olsr6meshif=$(awk -F= '/interface=/ {print $2}' /config/olsrd2/olsrd2.conf | tr -d \])
     olsr6interfaces=''
     # get all running ethernet interfaces in format eth0;192.168.1.1/24
-    v6interfacelist=$(ip -f inet6 addr | grep -v '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";" | grep -ivE "switch|lo;::1/128")
+    v6interfacelist=$(ip -f inet6 addr | grep -v '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";" | grep -iv switch)
     for v6if in $v6interfacelist; do
         v6ifinterface=$(echo $v6if | cut -d";" -f1)
         v6ifaddress=$(echo $v6if | cut -d";" -f2)
+        if [ "$v6ifaddress" == "::1/128" ]; then
+            v6ifaddress=""
+        elif [ "${v6ifaddress:0:6}" == "fe80::" ]; then
+            v6ifaddress="scope-local"
+        fi
         v6ifinterface=$(echo ${v6ifinterface} | cut -d@ -f1)
         intfstatus=''
         for mesh in $olsr6meshif; do
@@ -5339,8 +5344,10 @@ echo $output >> $log
             echo -n "" >/dev/null
         fi
         # stop daemon if running
-        ps aux | grep '/config/olsrd2/olsrd2 -l /config/olsrd2/olsrd2.conf' | grep -v grep | awk '{print $2;}' | xargs kill >>$log 2>>$log
-        sleep 1
+        if [ $(ps aux | grep '/config/olsrd2/olsrd2 -l /config/olsrd2/olsrd2.conf' | grep -v grep | wc -l) != "0" ]; then
+            ps aux | grep '/config/olsrd2/olsrd2 -l /config/olsrd2/olsrd2.conf' | grep -v grep | awk '{print $2;}' | xargs kill >>$log 2>>$log
+            sleep 1
+        fi
         rm -f /var/lock/olsrd2 >>$log 2>>$log
     fi
     # end
