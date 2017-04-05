@@ -11,7 +11,7 @@ versioninfo=201704052
 </div>
 <legend style="position:absolute;right:0px;padding:5px;">
     <center>EdgeMAX Wizard "OLSRd_V2"<br>created 03/2017 by CPO for FunkFeuer.at<br>
-    Version 20170405/pkg-0.5/oonf-0.13.0</center>
+    Version 20170405/pkg-0.6/oonf-0.13.0</center>
 </legend>
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
   <table border="0">
@@ -82,6 +82,14 @@ function colors() {
     } 
     document.getElementById('updatestatus').disabled = true;
     document.getElementById('olsrd2status').disabled = true;
+    document.getElementById('eui4address').disabled = true;
+    document.getElementById('nodeiddec').disabled = true;
+    document.getElementById('nodeidhex').disabled = true;
+    document.getElementById('routeriddec').disabled = true;
+    document.getElementById('routeridhex').disabled = true;
+    document.getElementById('niciddec').disabled = true;
+    document.getElementById('nicidhex').disabled = true;
+    document.getElementById('tunnel4in6addrv4').disabled = true;
     var v6nodes = document.getElementById("ipv6olsrd").getElementsByTagName('*');
     for(var i=0; i<v6nodes.length; i++) {
         if (v6nodes[i].name == "olsrv6intf") {
