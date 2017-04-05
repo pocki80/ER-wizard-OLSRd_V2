@@ -5184,12 +5184,11 @@ apply () {
     ####### wizard manual update from github
 
     eui4addron=$(jq -M -r '.eui4addron' $INPUT)
-    currenteui64address=$(jq -M -r '.currenteui64address' $INPUT)
     ####### check lo-EUI64 address assignement
     #
     ### EUI64
     # currently assigned
-    realeui64address=$(ip -6 addr show lo | grep global | grep '2a02:61:0:ff:' | awk {'print $2'} | head -n 1)
+    currenteui64address=$(ip -6 addr show lo | grep global | grep '2a02:61:0:ff:' | awk {'print $2'} | head -n 1)
     # EUI64 suitable for this unique EdgeRouter device (turn bit-7 of byte-1)
     if [ $(ip -6 link show switch0 | grep link/ether | awk {'print $2'} | wc -w) == "1" ]; then
         D2B=({0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1})
@@ -5200,8 +5199,9 @@ apply () {
     else
         eui64address="err: MAC address of switch0 not found"
     fi
-    echo "debug - on="$eui4addron", real="$realeui64address", current="$currenteui64address", eui64"$eui64address"." >> $log
+    echo "debug 1 - on="$eui4addron", current="$currenteui64address", eui64="$eui64address"." >> $log
     if [ "$eui4addron" == "on" ]; then
+        echo "debug 2" >> $log
         if [ "$currenteui64address" != "$eui64address" ] && [ "$hexneu" ]; then
             # enable address for loopback!
             echo "enable address "$eui64address" for loopback via command wrapper" >> $log
@@ -5209,11 +5209,12 @@ apply () {
             executecmd2="set interfaces loopback lo address "$eui64address
         fi
     else
-        if [ "$currenteui64address" ] &&  [ "$currenteui64address" == "$eui64address" ]; then
+        echo "debug 3" >> $log
+        if [ "$currenteui64address" ] && [ "$eui64address" ] && [ "$currenteui64address" == "$eui64address" ]; then
             # remove address from loopback!
-            echo "remove address from loopback via command wrapper" >> $log
+            echo "remove address"$currenteui64address" from loopback via command wrapper" >> $log
             docommands="1"
-            executecmd1="delete interfaces loopback lo address "$eui64address
+            executecmd1="delete interfaces loopback lo address "$currenteui64address
         fi
     fi
     # 
