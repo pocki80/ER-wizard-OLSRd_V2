@@ -2,7 +2,7 @@
 
 #
 # EdgeMAX Wizard "ER-wizard-OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
-# Version 20170404/pkg-0.5/oonf-0.13.0
+# Version 20170405/pkg-0.5/oonf-0.13.0
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: OLSRd_V2
 #
@@ -29,12 +29,12 @@ gitbranch="master"
 # DO NOT EDIT BELOW HERE !
 #
 
-echo "EdgeMAX OLSRd_V2 Wizard started $(date +%H:%M:%S.%N) - "$$","$BASHPID >>$log
+echo "EdgeMAX OLSRd_V2 Wizard started $(date +%H:%M:%S.%N) - Session="$$ >>$log
 
 #base64begin 
 # !dont edit or remove this comment!
 # first run of wizard, so load and install package
-echo "Installation started $(date +%H:%M:%S.%N) - "$$","$BASHPID >>$log
+echo "Installation started $(date +%H:%M:%S.%N) - Session="$$ >>$log
 
 # download source package
 # scp ubnt@193.238.158.8:/home/ubnt/ER-OLSRd_V2/builds/0xff-er-olsrd-v2_0.1_mipsel.deb /tmp/0xff-er-olsrd-v2_0.1_mipsel.deb
@@ -4909,7 +4909,7 @@ WL81T82xxGf7AgAAAAAEWVo=
 " | base64 -d >/tmp/$packagefile
 #filecontentend
 if [[ $? == 0 ]]; then 
-    echo "extracted package file: "$packagefile" without error - "$$","$BASHPID >>$log
+    echo "extracted package file: "$packagefile" without error - Session="$$ >>$log
 else
     echo "extraction of package file failed" >> $log
 fi
@@ -4956,7 +4956,7 @@ onlinecheck () {
 
 # function called when you click the wizard
 load () {
-    echo "Load procedure... - "$$","$BASHPID >>$log
+    echo "Load procedure... - Session="$$ >>$log
 
     ####### wizard version check against github
     # 
@@ -5299,7 +5299,7 @@ apply () {
             executecmd6="delete system name-server '2001:4860:4860::8888'"
         fi
         if [ $(grep -E "^    name-server 2001:4860:4860::8844" /config/config.boot | wc -l) != "0" ]; then
-            echo "Remove 2nc Google v6-DNS" >>$log
+            echo "Remove 2nd Google v6-DNS" >>$log
             docommands="1"
             executecmd7="delete system name-server '2001:4860:4860::8844'"
         fi
@@ -5433,4 +5433,4 @@ case "$ACTION" in
         ;;
 esac
 
-echo "EdgeMAX OLSRd_V2 Wizard ended $(date +%H:%M:%S.%N) - "$$","$BASHPID >> $log
+echo "EdgeMAX OLSRd_V2 Wizard ended $(date +%H:%M:%S.%N) - Session="$$ >> $log
