@@ -5147,12 +5147,21 @@ load () {
     # 
     ####### ipv6 addresses check
 
-    # get all variables together for output
+    ####### google v6-dns assignment check
+    #
+    if [ $(grep -E "^    name-server 2001:4860:4860::8888" /config/config.boot | wc -l) != "0" ] ||
+       [ $(grep -E "^    name-server 2001:4860:4860::8888" /config/config.boot | wc -l) != "0" ]; then
+       googlednson=",\"googlednson\":\"on\""
+    fi
+    # end
+    ####### google v6-dns assignment check
+
+ # get all variables together for output
     olsr6config=",\"olsr6config\":[$olsr6interfaces]"
     tunnel4in6=",\"tunnel4in6addrv4\":\"$tunnel4in6addrv4\""
 
     echo -n "{\"success\":\"1\",\"data\":{"
-    echo -n "$packagestatus $updatestatus $autostart $nodenumbers $olsr6config $tunnel4in6 $eui4addr $nodeidaddr"
+    echo -n "$packagestatus $updatestatus $autostart $nodenumbers $olsr6config $tunnel4in6 $eui4addr $nodeidaddr $googlednson"
     echo    "} ,\"definition\":{ } }"
 }
 
@@ -5263,10 +5272,40 @@ apply () {
         docommands="1"
         executecmd5="set interfaces loopback lo address "$nodeidaddress
     fi
-    
     ####### ipv6 addresses check
     # end
     ####### check lo-NODEID address assignement
+
+    googlednson=$(jq -M -r '.googlednson' $INPUT)
+    ####### check google dns assignment
+    #
+    if [[ "$nodeidaddron" == "on" ]]; then
+        # check and add
+        if [ $(grep -E "^    name-server 2001:4860:4860::8888" /config/config.boot | wc -l) == "0" ]; then
+            echo "Apply 1st Google v6-DNS" >>$log
+            docommands="1"
+            executecmd6="set system name-server '2001:4860:4860::8888"
+        fi
+        if [ $(grep -E "^    name-server 2001:4860:4860::8844" /config/config.boot | wc -l) == "0" ]; then
+            echo "Apply 2nd Google v6-DNS" >>$log
+            docommands="1"
+            executecmd7="set system name-server '2001:4860:4860::8844"
+        fi
+    else
+        # check and remove
+        if [ $(grep -E "^    name-server 2001:4860:4860::8888" /config/config.boot | wc -l) != "0" ]; then
+            echo "Remove 1st Google v6-DNS" >>$log
+            docommands="1"
+            executecmd6="delete system name-server '2001:4860:4860::8888"
+        fi
+        if [ $(grep -E "^    name-server 2001:4860:4860::8844" /config/config.boot | wc -l) != "0" ]; then
+            echo "Remove 2nc Google v6-DNS" >>$log
+            docommands="1"
+            executecmd7="delete system name-server '2001:4860:4860::8844"
+        fi
+    fi
+    # end
+    ####### check google dns assignment
 
     if [ "$docommands" ]; then
         echo "Applying script commands..." >>$log
@@ -5395,4 +5434,3 @@ case "$ACTION" in
 esac
 
 echo "EdgeMAX OLSRd_V2 Wizard ended $(date +%H:%M:%S.%N) - "$$","$BASHPID >> $log
-echo "" >> $log
