@@ -2,7 +2,7 @@
 
 EdgeMAX Wizard "OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201704050
+versioninfo=201704051
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 
 -->
@@ -76,6 +76,8 @@ function colors() {
         input.style.color = "red";
     } else if (input.value.match(/up-to-date/)) {
         input.style.color = "green";
+        // allow same version re-install for development
+        document.getElementById('updatefromgithub').disabled = false;
     } 
     document.getElementById('updatestatus').disabled = true;
     document.getElementById('olsrd2status').disabled = true;
