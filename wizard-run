@@ -2,7 +2,7 @@
 
 #
 # EdgeMAX Wizard "ER-wizard-OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
-# Version 20170405/pkg-0.6/oonf-0.13.0
+# Version 20170406/pkg-0.6/oonf-0.13.0
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: OLSRd_V2
 #
@@ -5202,6 +5202,12 @@ apply () {
     fi
     # end
     ####### wizard manual update from github
+
+    reset2defaults=$(jq -M -r '.reset2defaults' $INPUT)
+    if [ "$reset2defaults" == "on" ]; then
+        echo "Restoring default config!" >> $log
+        cp /config/olsrd2/olsrd2_default.conf /config/olsrd2/olsrd2.conf
+    fi
 
     eui4addron=$(jq -M -r '.eui4addron' $INPUT)
     ####### check lo-EUI64 address assignement
