@@ -5332,13 +5332,13 @@ apply () {
         else
             lanenabled="no"
         fi
-        echo "Debug-LAN 1 - Router-Advert for "$interface", "$prefix" currently enabled, checkbox:"$lanenabled
+        echo "Debug-LAN 1 - Router-Advert for "$interface", "$prefix" currently enabled, checkbox:"$lanenabled  >>$log
         ## if "no" -> disable router advert for this interface!
     done
     for v6if in $lansenabled; do
         if [ ! -f "/run/radvd-"$v6if".conf" ]; then
             #enable radvd for this interface
-            echo "Debug-LAN 2 - Need to enable Router-Advert for "$v6if
+            echo "Debug-LAN 2 - Need to enable Router-Advert for "$v6if >>$log
         fi
     done
 
