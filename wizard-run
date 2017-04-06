@@ -5049,7 +5049,6 @@ load () {
     olsr6interfaces=''
     # get all running ethernet interfaces in format eth0;192.168.1.1/24
     v6interfacelist=$(ip -f inet6 addr | grep -v '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";" | grep -iv switch)
-
     for v6if in $v6interfacelist; do
         v6ifinterface=$(echo $v6if | cut -d";" -f1)
         v6ifaddress=$(echo $v6if | cut -d";" -f2)
@@ -5059,13 +5058,14 @@ load () {
             v6ifaddress="scope-local"
         fi
         v6ifinterface=$(echo ${v6ifinterface} | cut -d@ -f1)
-        intfstatus=''
+        intfstatus=""
         for mesh in $olsr6meshif; do
             if [[ "$mesh" == "${v6ifinterface}" ]]; then
                 intfstatus='"enabled":"on",'
             fi
         done
-        if [ -f "/run/radvd-"${v6ifinterface}".conf"  ]; then
+        # only if intfstatus=='' this interface may be LAN!
+        if [ "$intfstatus" == "" ] && [ -f "/run/radvd-"${v6ifinterface}".conf"  ]; then
             lanon="on"
             prefix=$(grep prefix "/run/radvd-"${v6ifinterface}".conf" | awk {'print $2'})
         else
@@ -5321,6 +5321,27 @@ apply () {
     fi
     # end
     ####### check google dns assignment
+
+    ####### check for LAN enabled devices
+    lansenabled=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | .olsrv6intf' $INPUT)
+    for i in $(find /run/ -name radvd-*.conf 2>/dev/null); do
+        interface=$(grep interface $i | awk {'print $2'})
+        prefix=$(grep prefix $i | awk {'print $2'})
+        if [ $(jq -M -r '.olsr6config[] | select (.lanon=="on") | select (.olsrv6intf=="'$interface'") | .olsrv6intf' $INPUT) ]; then
+            lanenabled="yes"
+        else
+            lanenabled="no"
+        fi
+        echo "Debug-LAN 1 - Router-Advert for "$interface", "$prefix" currently enabled, checkbox:"$lanenabled
+        ## if "no" -> disable router advert for this interface!
+    done
+    for v6if in $lansenabled; do
+        if [ ! -f "/run/radvd-"$v6if".conf" ]; then
+            #enable radvd for this interface
+            echo "Debug-LAN 2 - Need to enable Router-Advert for "$v6if
+        fi
+    done
+
 
     if [ "$docommands" ]; then
         echo "Applying script commands..." >>$log

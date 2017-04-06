@@ -2,7 +2,7 @@
 
 EdgeMAX Wizard "OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201704061
+versioninfo=201704062
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 
 -->
@@ -50,10 +50,10 @@ versioninfo=201704061
         <div class="addable-template" style="padding-top:0px;">
             <div class="multi">
                 <div>Enable:    <input name="enabled" type="checkbox" onclick="validate()" /></div>
-                <div>Interface: <input id="olsrinterface" name="olsrv6intf" size="5" disabled /></div>
-                <div>Address:   <input name="ipv6address" size="30" disabled /></div>
+                <div><input id="olsrinterface" name="olsrv6intf" size="5" disabled /></div>
+                <div><input name="ipv6address" size="30" disabled /></div>
                 <div>LAN-PD:    <input name="lanon" type="checkbox" onclick="validate()" /></div>
-                <div>Address:   <input name="prefix" size="20" disabled /></div>
+                <div><input name="prefix" size="20" disabled /></div>
             </div>
         </div>
         <div class="addable-container"></div>
@@ -104,6 +104,8 @@ function colors() {
             } else {
                 v6nodes[i].style.color = "black";
             }
+        } else if (v6nodes[i].name == "prefix") {
+            v6nodes[i].disabled = true;
         }
     }
 }
