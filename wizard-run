@@ -5327,12 +5327,14 @@ apply () {
     for i in $(find /run/ -name radvd-*.conf 2>/dev/null); do
         interface=$(grep interface $i | awk {'print $2'})
         prefix=$(grep prefix $i | awk {'print $2'})
+        echo -n "Debug-LAN 1 - Router-Advert for "$interface", "$prefix" currently enabled"  >>$log
         if [ $(jq -M -r '.olsr6config[] | select (.lanon=="on") | select (.olsrv6intf=="'$interface'") | .olsrv6intf' $INPUT) ]; then
             lanenabled="yes"
+            echo ", all fine" >>$log
         else
             lanenabled="no"
+            echo ", need to disable this!" >>$log
         fi
-        echo "Debug-LAN 1 - Router-Advert for "$interface", "$prefix" currently enabled, checkbox:"$lanenabled  >>$log
         ## if "no" -> disable router advert for this interface!
     done
     for v6if in $lansenabled; do
