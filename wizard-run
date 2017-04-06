@@ -5049,6 +5049,7 @@ load () {
     olsr6interfaces=''
     # get all running ethernet interfaces in format eth0;192.168.1.1/24
     v6interfacelist=$(ip -f inet6 addr | grep -v '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";" | grep -iv switch)
+
     for v6if in $v6interfacelist; do
         v6ifinterface=$(echo $v6if | cut -d";" -f1)
         v6ifaddress=$(echo $v6if | cut -d";" -f2)
@@ -5064,7 +5065,14 @@ load () {
                 intfstatus='"enabled":"on",'
             fi
         done
-        olsr6interfaces=$olsr6interfaces'{'$intfstatus'"olsrv6intf":"'${v6ifinterface}'","ipv6address":"'${v6ifaddress}'"},'
+        if [ -f "/run/radvd-"${v6ifinterface}".conf"  ]; then
+            lanon="on"
+            prefix=$(grep prefix "/run/radvd-"${v6ifinterface}".conf" | awk {'print $2'})
+        else
+            lanon=""
+            prefix=""
+        fi
+        olsr6interfaces=$olsr6interfaces'{'$intfstatus'"olsrv6intf":"'${v6ifinterface}'","ipv6address":"'${v6ifaddress}'","lanon":"'${lanon}'","prefix":"'${prefix}'"},'
     done
     olsr6interfaces=${olsr6interfaces%","}
 
