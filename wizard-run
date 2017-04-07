@@ -5205,6 +5205,9 @@ apply () {
             rm -Rf /tmp/$gitowner-$gitrepo* >>$log 2>>$log
             chmod 755 $(dirname $olsrdwizard)"/"wizard-run >>$log 2>>$log
             $(dirname $olsrdwizard)"/"wizard-run load >>$log 2>>$log
+            echo "{\"success\":\"1\"}"
+            echo "EdgeMAX OLSRd_V2 Wizard STOPPED after upgrade $(date +%H:%M:%S.%N) - Session="$$ >> $log
+            exit 0
         fi
     fi
     # end
@@ -5484,7 +5487,7 @@ exit $ret
 ret=$?
 output=$(cat $tfile)
 rm -f $tfile
-echo $output >> $log
+echo "${output}" >> $log
     fi
 
     ####### check autostart
