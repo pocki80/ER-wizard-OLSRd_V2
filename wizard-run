@@ -5346,19 +5346,20 @@ apply () {
             echo ", all fine" >>$log
             if [ "$announced" == "0" ]; then
                 echo "Debug-LAN 1A- Announcement is missing, add lan-command to olsrd2.conf!" >>$log
-                # ACTION:insert lan announcement from .conf
+                linenumber=$(($(grep -inE -m 4 "announce user-block for clients|lan|\[olsrv2\]" /config/olsrd2/olsrd2.conf | tail -n 1 | awk -F: {'print $1'})+1))
+                sed -i $linenumber'i\
+lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             fi
         else
             lanenabled="no"
             echo ", need to disable this!" >>$log
             if [ "$announced" == "1" ]; then
                 echo "Debug-LAN 1A- Announcement is active, remove lan-command from olsrd2.conf!" >>$log
-                # ACTION:remove lan announcement from .conf
+                sed -i $(grep -in "lan $prefix" /config/olsrd2/olsrd2.conf | grep -iv "#" | awk -F: {'print $1'})"d" /config/olsrd2/olsrd2.conf 2>>$log
             fi
             # ACTION:remove ipv6-address from interface
             # ACTION:remove ipv6-settings from interface
         fi
-        ## if "no" -> disable router advert for this interface!
     done
     # only 1 lan can be enabled with this code
     # ${#lansenabled[@]} --> count of enabled interfaces!
@@ -5394,7 +5395,9 @@ apply () {
             if [ "$prefix" ] && [ "$addthisaddress" ]; then
                 echo "DEBUG-LAN 3 - generated "$prefix" and "$addthisaddress" to use for "$i >>$log
                 # ACTION:assign ipv6-address and ipv6-settings to interface
-                # ACTION:insert lan announcement to .conf
+                linenumber=$(($(grep -inE -m 4 "announce user-block for clients|lan|\[olsrv2\]" /config/olsrd2/olsrd2.conf | tail -n 1 | awk -F: {'print $1'})+1))
+                sed -i $linenumber'i\
+lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             else
                 echo "DEBUG-LAN 3 - cannot configure "$i" as LAN without prefix/inside-address" >>$log
             fi
@@ -5403,9 +5406,13 @@ apply () {
             announced=$(grep -vE '^#|^$' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | grep $prefix | wc -l)
             if [ "$announced" == "0" ]; then
                 echo "Debug-LAN 2 - Announcement is missing, add lan-command to olsrd2.conf!" >>$log
-                # ACTION:insert lan announcement to .conf
+                linenumber=$(($(grep -inE -m 4 "announce user-block for clients|lan|\[olsrv2\]" /config/olsrd2/olsrd2.conf | tail -n 1 | awk -F: {'print $1'})+1))
+                sed -i $linenumber'i\
+lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             fi
         fi
+        # by now only one LAN setting can be managed
+        break
     done
 
 
