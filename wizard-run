@@ -5072,7 +5072,7 @@ load () {
             lanon=""
             prefix=""
         fi
-        olsr6interfaces=$olsr6interfaces'{'$intfstatus'"olsrv6intf":"'${v6ifinterface}'","ipv6address":"'${v6ifaddress}'","lanon":"'${lanon}'","prefix":"'${prefix}'"},'
+        olsr6interfaces=$olsr6interfaces'{'$intfstatus'"olsrv6intf":"'${v6ifinterface}'","ipv6address":"'${v6ifaddress}'","lanon":"'${lanon}'","prefix":"'${prefix}'","origprefix":"'${prefix}'"},'
     done
     olsr6interfaces=${olsr6interfaces%","}
 
@@ -5241,6 +5241,7 @@ apply () {
             echo "enable address "$eui64address" for loopback via command wrapper" >> $log
             docommands="1"
             executecmd2="set interfaces loopback lo address "$eui64address
+            commandlist[${#commandlist[@]}]=executecmd2
         fi
     else
         echo "debug 3" >> $log
@@ -5249,6 +5250,7 @@ apply () {
             echo "remove address"$currenteui64address" from loopback via command wrapper" >> $log
             docommands="1"
             executecmd1="delete interfaces loopback lo address "$currenteui64address
+            commandlist[${#commandlist[@]}]=executecmd1
         fi
     fi
     # 
@@ -5271,6 +5273,7 @@ apply () {
             echo "Remove old Address "$currentnodeidaddress"..." >>$log
             docommands="1"
             executecmd3="delete interfaces loopback lo address "$currentnodeidaddress
+            commandlist[${#commandlist[@]}]=executecmd3
         fi
     fi
     if [[ "$nodeidaddron" != "on" ]] && [ "$currentaddressfound" != "0" ] && [ "$currentnodeidaddress" ] && [ $(echo "$currentnodeidaddress" | grep -i "err" | wc -l) == "0" ]; then
@@ -5279,6 +5282,7 @@ apply () {
         echo "Unassign old Address "$currentnodeidaddress"..." >>$log
         docommands="1"
         executecmd4="delete interfaces loopback lo address "$currentnodeidaddress
+        commandlist[${#commandlist[@]}]=executecmd4
     fi
     if [[ "$nodeidaddron" == "on" ]] && [ "$nodeidaddress" ] && [ $(echo "$nodeidaddress" | grep -i "err" | wc -l) == "0" ] && [ $(ip -6 addr show lo | grep global | grep "$nodeidaddress" | wc -l) == "0" ]; then
         # what now?
@@ -5286,6 +5290,7 @@ apply () {
         echo "Apply new Address "$nodeidaddress"..." >>$log
         docommands="1"
         executecmd5="set interfaces loopback lo address "$nodeidaddress
+        commandlist[${#commandlist[@]}]=executecmd5
     fi
     ####### ipv6 addresses check
     # end
@@ -5300,11 +5305,13 @@ apply () {
             echo "Apply 1st Google v6-DNS" >>$log
             docommands="1"
             executecmd6="set system name-server 2001:4860:4860::8888"
+            commandlist[${#commandlist[@]}]=executecmd6
         fi
         if [ $(grep -E "^    name-server 2001:4860:4860::8844" /config/config.boot | wc -l) == "0" ]; then
             echo "Apply 2nd Google v6-DNS" >>$log
             docommands="1"
             executecmd7="set system name-server 2001:4860:4860::8844"
+            commandlist[${#commandlist[@]}]=executecmd7
         fi
     else
         # check and remove
@@ -5312,11 +5319,13 @@ apply () {
             echo "Remove 1st Google v6-DNS" >>$log
             docommands="1"
             executecmd6="delete system name-server 2001:4860:4860::8888"
+            commandlist[${#commandlist[@]}]=executecmd6
         fi
         if [ $(grep -E "^    name-server 2001:4860:4860::8844" /config/config.boot | wc -l) != "0" ]; then
             echo "Remove 2nd Google v6-DNS" >>$log
             docommands="1"
             executecmd7="delete system name-server 2001:4860:4860::8844"
+            commandlist[${#commandlist[@]}]=executecmd7
         fi
     fi
     # end
@@ -5332,6 +5341,12 @@ apply () {
         interface=$(grep interface $i | awk {'print $2'})
         prefix=$(grep prefix $i | awk {'print $2'} | sed -e "s/::\//::0\//")
         announced=$(grep -vE '^#|^$' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | grep $prefix | wc -l)
+        userprefix=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | select (.olsrv6intf=="'$interface'") | .prefix' $INPUT)
+        origprefix=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | select (.olsrv6intf=="'$interface'") | .origprefix' $INPUT)
+        if [ "$userprefix" != "" ] && [ "$origprefix" != "" ] && [ "$userprefix" != "$origprefix" ]; then
+            echo "Debug-LAN 8 - user changed prefix for "$interface" from "$origprefix" to "$userprefix", currently enabled "$prefix"." >>$log
+            # open issue: correctly change all IP, Prefix, announcement, router-adverts to new ip/prefix
+        fi
         echo -n "Debug-LAN 1 - Router-Advert for "$interface", "$prefix" currently enabled"  >>$log
         thislanon=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | select (.olsrv6intf=="'$interface'") | .olsrv6intf' $INPUT)
         # check against MESH interfaces, change to "" if same interface!
@@ -5357,19 +5372,35 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
                 echo "Debug-LAN 1A- Announcement is active, remove lan-command from olsrd2.conf!" >>$log
                 sed -i $(grep -in "lan $prefix" /config/olsrd2/olsrd2.conf | grep -iv "#" | awk -F: {'print $1'})"d" /config/olsrd2/olsrd2.conf 2>>$log
             fi
-            # ACTION:remove ipv6-address from interface
+            intf=$(echo $interface | awk -F. {'print $1'})
+            vif=$(echo $interface | awk -F. {'print $2'})
+            if   [ "$(echo $intf | grep eth | wc -l)" == "1" ];    then command="interfaces ethernet $intf ";
+            elif [ "$(echo $intf | grep br | wc -l)" == "1" ];     then command="interfaces bridge $intf ";
+            elif [ "$(echo $intf | grep switch | wc -l)" == "1" ]; then command="interfaces switch $intf ";
+            fi
+            if [ "$vif" ]; then command=$command"vif "$vif" "; fi
+            #2a02:61:a9e:21::51de:b00b/64
+            insideaddress=$(echo $prefix | sed -e "s/::0\//::51de:b00b\//")
+            if [ "$(ip -6 addr show $interface | grep global | grep $insideaddress | wc -l)" == "1" ]; then
+                # ACTION:remove ipv6-address from interface
+                echo "removing $insideaddress from $interface" >>$log
+                #docommands="1"
+                commandlist[${#commandlist[@]}]="delete "$command" address "$insideaddress
+            fi
             # ACTION:remove ipv6-settings from interface
+            #docommands="1"
+            commandlist[${#commandlist[@]}]="delete "$command" address "$insideaddress" ipv6"
         fi
     done
 
     # only 1 lan can be enabled with this code: skip loop if more than one was selected!
+    # establish mechanism to enable 2+ interfaces with auto-detect free inside-v6-address and -prefix!
     count=0
     for i in $lansenabled; do count=$((count +1)); done
-    if [ $count \> 1 ]; then lansenabled=""; fi
+    if [ $count \> 1 ]; then lansenabled=""; echo "Debug-LAN 9 - skipping newly enabled LAN-PD, more than 1 interfaces was selected" >>$log; fi
 
     for i in $lansenabled; do
         # check against MESH interfaces, change to "" if same interface!
-        thisismesh=""
         for mesh in $olsr6meshif; do
             if [[ "$mesh" == "${i}" ]]; then
                 thisismesh="on"
@@ -5377,6 +5408,7 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
         done
         if [ "$thisismesh" ]; then
             echo "Debug-LAN 2 - LAN at "$interface" cannot be enabled, as this iterface is a MESH/olsr2 interface" >>$log
+            thisismesh=""
             continue
         fi
         if [ ! -f "/run/radvd-"$i".conf" ]; then
@@ -5397,13 +5429,13 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
                 fi
             fi
             if [ "$prefix" ] && [ "$addthisaddress" ]; then
-                echo "DEBUG-LAN 3 - generated "$prefix" and "$addthisaddress" to use for "$i >>$log
+                echo "Debug-LAN 3 - generated "$prefix" and "$addthisaddress" to use for "$i >>$log
                 # ACTION:assign ipv6-address and ipv6-settings to interface
                 linenumber=$(($(grep -inE -m 4 "announce user-block for clients|lan|\[olsrv2\]" /config/olsrd2/olsrd2.conf | tail -n 1 | awk -F: {'print $1'})+1))
                 sed -i $linenumber'i\
 lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             else
-                echo "DEBUG-LAN 3 - cannot configure "$i" as LAN without prefix/inside-address" >>$log
+                echo "Debug-LAN 3 - cannot configure "$i" as LAN without prefix/inside-address" >>$log
             fi
         else
             prefix=$(grep prefix "/run/radvd-"$i".conf" | awk {'print $2'} | sed -e "s/::\//::0\//")
@@ -5415,7 +5447,6 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
 lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             fi
         fi
-        # by now only one LAN setting can be managed
     done
 
 
@@ -5475,6 +5506,13 @@ ret=$?
 output=$(cat $tfile)
 rm -f $tfile
 echo $output >> $log
+    fi
+
+    if [ ${#commandlist[@]} \> 0 ]; then
+        echo "SCRIPT COMMANDS:"
+        for i in "${commandlist[@]}"; do
+            echo $i 
+        done
     fi
 
     ####### check autostart
