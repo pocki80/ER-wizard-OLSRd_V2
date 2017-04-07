@@ -5345,14 +5345,14 @@ apply () {
             lanenabled="yes"
             echo ", all fine" >>$log
             if [ "$announced" == "0" ]; then
-                echo "Debug-LAN 1A- Announcement is missing, add lan-comment to olsrd2.conf!" >>$log
+                echo "Debug-LAN 1A- Announcement is missing, add lan-command to olsrd2.conf!" >>$log
                 # ACTION:insert lan announcement from .conf
             fi
         else
             lanenabled="no"
             echo ", need to disable this!" >>$log
             if [ "$announced" == "1" ]; then
-                echo "Debug-LAN 1A- Announcement is active, remove lan-comment from olsrd2.conf!" >>$log
+                echo "Debug-LAN 1A- Announcement is active, remove lan-command from olsrd2.conf!" >>$log
                 # ACTION:remove lan announcement from .conf
             fi
             # ACTION:remove ipv6-address from interface
@@ -5399,10 +5399,10 @@ apply () {
                 echo "DEBUG-LAN 3 - cannot configure "$i" as LAN without prefix/inside-address" >>$log
             fi
         else
-            prefix=$(grep prefix $i | awk {'print $2'} | sed -e "s/::\//::0\//")
+            prefix=$(grep prefix "/run/radvd-"$i".conf" | awk {'print $2'} | sed -e "s/::\//::0\//")
             announced=$(grep -vE '^#|^$' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | grep $prefix | wc -l)
             if [ "$announced" == "0" ]; then
-                echo "Debug-LAN 2 - Announcement is missing, add lan-comment to olsrd2.conf!" >>$log
+                echo "Debug-LAN 2 - Announcement is missing, add lan-command to olsrd2.conf!" >>$log
                 # ACTION:insert lan announcement to .conf
             fi
         fi
