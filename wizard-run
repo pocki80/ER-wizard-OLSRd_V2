@@ -5422,12 +5422,12 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
                 fi
                 if [ "$vif" ]; then command=$command"vif "$vif" "; fi
                 addthisaddress=$(echo $prefix | sed -e "s/::0\//::51de:b00b\//")
-                if [ "$(ip -6 addr show $interface | grep global | grep $addthisaddress | wc -l)" == "0" ]; then
-                    echo "assinging $addthisaddress to $interface" >>$log
+                if [ "$(ip -6 addr show $i | grep global | grep $addthisaddress | wc -l)" == "0" ]; then
+                    echo "assigning $addthisaddress to $i" >>$log
                     commandlist[${#commandlist[@]}]="set "$command" address "$addthisaddress
                 fi
                 # just do be sure to start without settings here
-                echo "assinging ipv6 router advert settings to $interface" >>$log
+                echo "assigning ipv6 router advert settings to $i" >>$log
                 commandlist[${#commandlist[@]}]="delete "$command" ipv6"
                 commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert prefix "$prefix" autonomous-flag true"
                 commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert prefix "$prefix" on-link-flag true"
