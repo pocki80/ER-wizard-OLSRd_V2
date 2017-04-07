@@ -5361,8 +5361,12 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             # ACTION:remove ipv6-settings from interface
         fi
     done
-    # only 1 lan can be enabled with this code
-    # ${#lansenabled[@]} --> count of enabled interfaces!
+
+    # only 1 lan can be enabled with this code: skip loop if more than one was selected!
+    count=0
+    for i in $lansenabled; do count=$((count +1)); done
+    if [ $count \> 1 ]; then lansenabled=""; fi
+
     for i in $lansenabled; do
         # check against MESH interfaces, change to "" if same interface!
         thisismesh=""
@@ -5412,7 +5416,6 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             fi
         fi
         # by now only one LAN setting can be managed
-        break
     done
 
 
