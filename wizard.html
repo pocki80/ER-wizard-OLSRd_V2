@@ -2,7 +2,7 @@
 
 EdgeMAX Wizard "OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201704071
+versioninfo=201704072
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 
 -->
@@ -28,6 +28,9 @@ versioninfo=201704071
 <fieldset id="ipv6olsrd" name="ipv6olsrd" class="primary expanded">
     <legend>OLSRd2 IPv6</legend>
     <table border="0">
+      <tr><td style="vertical-align:middle">Firewall rules exist</td> <td><input id="firewallcreated" name="firewallcreated"  type="checkbox" disabled /><td></tr>
+      <tr><td style="vertical-align:middle">Initialize Firewall rules</td> <td><input id="initfirewall" name="initfirewall"  type="checkbox" /><td></tr>
+      <tr><td style="vertical-align:middle">Assign Google DNSv6 </td> <td><input id="googlednson" name="googlednson"  type="checkbox" /><td></tr>
       <tr><td style="vertical-align:middle">Assign Google DNSv6 </td> <td><input id="googlednson" name="googlednson"  type="checkbox" /><td></tr>
       <tr><td style="vertical-align:middle">lo-Adresse EUI64 </td> <td><input style="right:10px" id="eui4address" name="eui4address" type="text" size="40" disabled />
                <input id="eui4addron" name="eui4addron"  type="checkbox" /><span> Assigned </span><td></tr>
@@ -55,6 +58,7 @@ versioninfo=201704071
                 <div>LAN-PD:    <input name="lanon" type="checkbox" onclick="validate()" /></div>
                 <div><input name="prefix" size="20" disabled /></div>
                 <div><input name="origprefix" type="hidden" size="20" disabled /></div>
+                <div>FW:    <input name="firewallon" type="checkbox" onclick="validate()" /></div>
             </div>
         </div>
         <div class="addable-container"></div>
@@ -93,6 +97,7 @@ function colors() {
     document.getElementById('routeridhex').disabled = true;
     document.getElementById('niciddec').disabled = true;
     document.getElementById('nicidhex').disabled = true;
+    document.getElementById('firewallcreated').disabled = true;
     document.getElementById('tunnel4in6addrv4').disabled = true;
     var v6nodes = document.getElementById("ipv6olsrd").getElementsByTagName('*');
     for(var i=0; i<v6nodes.length; i++) {
