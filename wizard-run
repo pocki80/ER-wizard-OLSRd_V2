@@ -4972,7 +4972,7 @@ load () {
     else
         CURRENTVERSION=$(head -n 8 $olsrdwizard | grep -i versioninfo= | awk -F"=" {'print $2'})
         if [ $((onlinecheck)) = 0 ]; then
-            GITVERSION=$(curl -sL --connect-timeout 2 https://raw.githubusercontent.com/$gitowner/$gitrepo/$gitbranch/wizard.html | head -n 8 | grep -i versioninfo= | awk -F"=" {'print $2'})
+            GITVERSION=$(curl -sL --connect-timeout 2 --speed-time 2 https://raw.githubusercontent.com/$gitowner/$gitrepo/$gitbranch/wizard.html | head -n 8 | grep -i versioninfo= | awk -F"=" {'print $2'})
             if [ "$GITVERSION" ] && [ "$CURRENTVERSION" ]; then 
                 if [ $(($GITVERSION)) \> $(($CURRENTVERSION)) ]; then 
                     updatetext="new version available: "$GITVERSION", current: "$CURRENTVERSION >>$log 2>>$log
@@ -5110,7 +5110,7 @@ load () {
     # currently assigned
     currentnodeidaddress=$(ip -6 addr show lo | grep global | grep '2a02:61:' | grep -vE "2a02:61:0:|2a02:61::" | awk {'print $2'} | head -n 1)
     # get node id from map data and form IPv6-User-Block address
-    nodeid=$(curl -4s --connect-timeout 2 http://ff.cybercomm.at/mynodeid.php 2>/dev/null)
+    nodeid=$(curl -4s --connect-timeout 2 --speed-time 2 http://ff.cybercomm.at/mynodeid.php 2>/dev/null)
 
     # use router/nic id from existing ipv6 address if exist
     #routeridhex="1"
@@ -5204,7 +5204,7 @@ apply () {
         elif [ $((onlinecheck)) != 0 ]; then
             echo "currently offline" >>$log 2>>$log
         else
-            curl -sL -o /tmp/ER-wizard-OLSRd_V2_latest.tar.gz --connect-timeout 2 https://api.github.com/repos/$gitowner/$gitrepo/tarball >>$log 2>>$log
+            curl -sL -o /tmp/ER-wizard-OLSRd_V2_latest.tar.gz --connect-timeout 2 --speed-time 2 https://api.github.com/repos/$gitowner/$gitrepo/tarball >>$log 2>>$log
             tar   -xvzf /tmp/ER-wizard-OLSRd_V2_latest.tar.gz -C /tmp >/tmp/result.txt 2>>$log
             rm -f       /tmp/ER-wizard-OLSRd_V2_latest.tar.gz >>$log 2>>$log
             while read LINE; do
@@ -5215,7 +5215,7 @@ apply () {
             rm /tmp/result.txt >>$log 2>>$log
             rm -Rf /tmp/$gitowner-$gitrepo* >>$log 2>>$log
             chmod 755 $(dirname $olsrdwizard)"/"wizard-run >>$log 2>>$log
-            echo "EdgeMAX OLSRd_V2 Wizard STOPPED after upgrade $(date +%H:%M:%S.%N) - Session="$$ >> $log
+            #echo "EdgeMAX OLSRd_V2 Wizard STOPPED after upgrade $(date +%H:%M:%S.%N) - Session="$$ >> $log
             echo "Triggering initial wizard-load of new version to finish installation..." >> $log
             $(dirname $olsrdwizard)"/"wizard-run load >>$log 2>>$log
             echo "{\"success\":\"1\"}"
