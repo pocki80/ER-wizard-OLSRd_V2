@@ -5239,8 +5239,6 @@ apply () {
         if [ "$currenteui64address" != "$eui64address" ] && [ "$hexneu" ]; then
             # enable address for loopback!
             echo "enable address "$eui64address" for loopback via command wrapper" >> $log
-            docommands="1"
-            executecmd2="set interfaces loopback lo address "$eui64address
             commandlist[${#commandlist[@]}]="set interfaces loopback lo address "$eui64address
         fi
     else
@@ -5248,8 +5246,6 @@ apply () {
         if [ "$currenteui64address" ] && [ "$eui64address" ] && [ "$currenteui64address" == "$eui64address" ]; then
             # remove address from loopback!
             echo "remove address"$currenteui64address" from loopback via command wrapper" >> $log
-            docommands="1"
-            executecmd1="delete interfaces loopback lo address "$currenteui64address
             commandlist[${#commandlist[@]}]="delete interfaces loopback lo address "$currenteui64address
         fi
     fi
@@ -5271,8 +5267,6 @@ apply () {
         # remove old currentnodeidaddress?
         if [ "$currentaddressfound" != "0" ]; then
             echo "Remove old Address "$currentnodeidaddress"..." >>$log
-            docommands="1"
-            executecmd3="delete interfaces loopback lo address "$currentnodeidaddress
             commandlist[${#commandlist[@]}]="delete interfaces loopback lo address "$currentnodeidaddress
         fi
     fi
@@ -5280,16 +5274,12 @@ apply () {
         # what now?
         # remove old currentnodeidaddress?
         echo "Unassign old Address "$currentnodeidaddress"..." >>$log
-        docommands="1"
-        executecmd4="delete interfaces loopback lo address "$currentnodeidaddress
         commandlist[${#commandlist[@]}]="delete interfaces loopback lo address "$currentnodeidaddress
     fi
     if [[ "$nodeidaddron" == "on" ]] && [ "$nodeidaddress" ] && [ $(echo "$nodeidaddress" | grep -i "err" | wc -l) == "0" ] && [ $(ip -6 addr show lo | grep global | grep "$nodeidaddress" | wc -l) == "0" ]; then
         # what now?
         # apply nodeidaddress if not yet applied? 
         echo "Apply new Address "$nodeidaddress"..." >>$log
-        docommands="1"
-        executecmd5="set interfaces loopback lo address "$nodeidaddress
         commandlist[${#commandlist[@]}]="set interfaces loopback lo address "$nodeidaddress
     fi
     ####### ipv6 addresses check
@@ -5303,28 +5293,20 @@ apply () {
         # check and add
         if [ $(grep -E "^    name-server 2001:4860:4860::8888" /config/config.boot | wc -l) == "0" ]; then
             echo "Apply 1st Google v6-DNS" >>$log
-            docommands="1"
-            executecmd6="set system name-server 2001:4860:4860::8888"
             commandlist[${#commandlist[@]}]="set system name-server 2001:4860:4860::8888"
         fi
         if [ $(grep -E "^    name-server 2001:4860:4860::8844" /config/config.boot | wc -l) == "0" ]; then
             echo "Apply 2nd Google v6-DNS" >>$log
-            docommands="1"
-            executecmd7="set system name-server 2001:4860:4860::8844"
             commandlist[${#commandlist[@]}]="set system name-server 2001:4860:4860::8844"
         fi
     else
         # check and remove
         if [ $(grep -E "^    name-server 2001:4860:4860::8888" /config/config.boot | wc -l) != "0" ]; then
             echo "Remove 1st Google v6-DNS" >>$log
-            docommands="1"
-            executecmd6="delete system name-server 2001:4860:4860::8888"
             commandlist[${#commandlist[@]}]="delete system name-server 2001:4860:4860::8888"
         fi
         if [ $(grep -E "^    name-server 2001:4860:4860::8844" /config/config.boot | wc -l) != "0" ]; then
             echo "Remove 2nd Google v6-DNS" >>$log
-            docommands="1"
-            executecmd7="delete system name-server 2001:4860:4860::8844"
             commandlist[${#commandlist[@]}]="delete system name-server 2001:4860:4860::8844"
         fi
     fi
@@ -5379,17 +5361,12 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             elif [ "$(echo $intf | grep switch | wc -l)" == "1" ]; then command="interfaces switch $intf ";
             fi
             if [ "$vif" ]; then command=$command"vif "$vif" "; fi
-            #2a02:61:a9e:21::51de:b00b/64
             insideaddress=$(echo $prefix | sed -e "s/::0\//::51de:b00b\//")
             if [ "$(ip -6 addr show $interface | grep global | grep $insideaddress | wc -l)" == "1" ]; then
-                # ACTION:remove ipv6-address from interface
                 echo "removing $insideaddress from $interface" >>$log
-                #docommands="1"
                 commandlist[${#commandlist[@]}]="delete "$command" address "$insideaddress
             fi
-            # ACTION:remove ipv6-settings from interface
-            #docommands="1"
-            commandlist[${#commandlist[@]}]="delete "$command" address "$insideaddress" ipv6"
+            commandlist[${#commandlist[@]}]="delete "$command" ipv6"
         fi
     done
 
@@ -5430,10 +5407,39 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             fi
             if [ "$prefix" ] && [ "$addthisaddress" ]; then
                 echo "Debug-LAN 3 - generated "$prefix" and "$addthisaddress" to use for "$i >>$log
-                # ACTION:assign ipv6-address and ipv6-settings to interface
                 linenumber=$(($(grep -inE -m 4 "announce user-block for clients|lan|\[olsrv2\]" /config/olsrd2/olsrd2.conf | tail -n 1 | awk -F: {'print $1'})+1))
                 sed -i $linenumber'i\
 lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
+
+                # ACTION:assign ipv6-address and ipv6-settings to interface
+                intf=$(echo $i | awk -F. {'print $1'})
+                vif=$(echo $i | awk -F. {'print $2'})
+                if   [ "$(echo $intf | grep eth | wc -l)" == "1" ];    then command="interfaces ethernet $intf ";
+                elif [ "$(echo $intf | grep br | wc -l)" == "1" ];     then command="interfaces bridge $intf ";
+                elif [ "$(echo $intf | grep switch | wc -l)" == "1" ]; then command="interfaces switch $intf ";
+                fi
+                if [ "$vif" ]; then command=$command"vif "$vif" "; fi
+                addthisaddress=$(echo $prefix | sed -e "s/::0\//::51de:b00b\//")
+                if [ "$(ip -6 addr show $interface | grep global | grep $addthisaddress | wc -l)" == "0" ]; then
+                    echo "assinging $addthisaddress to $interface" >>$log
+                    commandlist[${#commandlist[@]}]="set "$command" address "$addthisaddress
+                fi
+                # just do be sure to start without settings here
+                echo "assinging ipv6 router advert settings to $interface" >>$log
+                commandlist[${#commandlist[@]}]="delete "$command" ipv6"
+                commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert prefix '"$prefix"' autonomous-flag true"
+                commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert prefix '"$prefix"' on-link-flag true"
+                commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert prefix '"$prefix"' valid-lifetime 2592000"
+                commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert cur-hop-limit 64"
+                commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert link-mtu 0"
+                commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert managed-flag true"
+                commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert max-interval 600"
+                commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert name-server '2001:4860:4860::8888'"
+                commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert name-server '2001:4860:4860::8844'"
+                commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert other-config-flag false"
+                commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert retrans-timer 0"
+                commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert send-advert true"
+                commandlist[${#commandlist[@]}]="set "$command" ipv6 dup-addr-detect-transmits 1"
             else
                 echo "Debug-LAN 3 - cannot configure "$i" as LAN without prefix/inside-address" >>$log
             fi
