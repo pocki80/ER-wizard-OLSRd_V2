@@ -5217,7 +5217,8 @@ apply () {
             chmod 755 $(dirname $olsrdwizard)"/"wizard-run >>$log 2>>$log
             echo "EdgeMAX OLSRd_V2 Wizard STOPPED after upgrade $(date +%H:%M:%S.%N) - Session="$$ >> $log
             echo "Triggering initial wizard-load of new version to finish installation..." >> $log
-            $(dirname $olsrdwizard)"/"wizard-run load 2>>$log
+            $(dirname $olsrdwizard)"/"wizard-run load >>$log 2>>$log
+            echo "{\"success\":\"1\"}"
             exit 0
         fi
     fi
