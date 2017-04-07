@@ -5060,9 +5060,14 @@ load () {
     # get all running ethernet interfaces in format eth0;192.168.1.1/24
     v6interfacelist=$(ip -f inet6 addr | grep -v '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";")
     #/opt/vyatta/config/active/interfaces/switch/switch0/firewall/out/ipv6-name/node.val -> lan_out0xff-6
+    #/opt/vyatta/config/active/interfaces/ethernet/eth0/vif/6/firewall/out/ipv6-name/node.val
     for i in $(find /opt/vyatta/config/active/interfaces -name node.val | grep "/firewall/out/"); do
         if [ "$(cat $i)" == "lan_out0xff-6" ]; then
-            fwlanlist[${#fwlanlist[@]}]=$(echo $i | awk -F/ {'print "$8'})
+            if [ "$(echo $i | grep "/vif/" | wc -l)" == "0" ]; then
+                fwlanlist[${#fwlanlist[@]}]=$(echo $i | awk -F/ {'print $8'})
+            else
+                fwlanlist[${#fwlanlist[@]}]=$(echo $i | awk -F/ {'print $8"."$10'})
+            fi
         fi
     done
     for v6if in $v6interfacelist; do
@@ -5081,7 +5086,7 @@ load () {
             fi
         done
         firewallon=""
-        for lan in $fwlanlist; do
+        for lan in "${fwlanlist[@]}"; do
             if [[ "$lan" == "${v6ifinterface}" ]]; then
                 firewallon="on"
             fi
@@ -5402,6 +5407,25 @@ apply () {
     ####### check for LAN enabled devices
     lansenabled=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | .olsrv6intf' $INPUT)
     v6interfacelist=$(ip -f inet6 addr | grep -v '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";")
+
+    #check if firewall ruleset exists
+    rules=$(grep -E "ipv6-name lan_out0xff-6 \{|ipv6-name wan_local0xff-6 \{" /config/config.boot | wc -l)
+    if [ "$rules" == "2" ]; then
+        firewallexists="1"
+    elif [ "$initfirewall" == "on" ]; then
+        firewallexists="1"
+    fi
+    # get list of interfaces with LAN-firewall
+    for i in $(find /opt/vyatta/config/active/interfaces -name node.val | grep "/firewall/out/"); do
+        if [ "$(cat $i)" == "lan_out0xff-6" ]; then
+            if [ "$(echo $i | grep "/vif/" | wc -l)" == "0" ]; then
+                fwlanlist[${#fwlanlist[@]}]=$(echo $i | awk -F/ {'print $8'})
+            else
+                fwlanlist[${#fwlanlist[@]}]=$(echo $i | awk -F/ {'print $8"."$10'})
+            fi
+        fi
+    done
+
     for i in $(grep interface /etc/radvd.conf | awk {'print $2'} 2>/dev/null); do
         interface=$i
         prefix=$(grep -A 25 "interface "$interface" {" /etc/radvd.conf | grep -m 1 prefix | awk {'print $2'} | sed -e "s/::\//::0\//")
@@ -5430,6 +5454,22 @@ apply () {
                 sed -i $linenumber'i\
 lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             fi
+            # ACTION: check if firewall is on or of
+            fwon=""
+            for lanif in "${fwlanlist[@]}"; do 
+                if [ "$lanif" == "$interface" ]; then
+                    fwon="1"
+                fi
+            done
+            fwuser=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | select (.olsrv6intf=="'$interface'") | .firewallon' $INPUT)
+            # ACTION: on/off -> disable
+            if [ "$fwon" ] && [ "$fwuser" != "on" ]; then
+                echo "disable firewall for "$interface >>$log
+            fi
+            # ACTION: off/on -> enable (if global ruleset exists)
+            if [ "$fwon" == "" ] && [ "$fwuser" == "on" ] && [ "$firewallexists" ]; then
+                echo "enable firewall for "$interface >>$log
+            fi
         else
             lanenabled="no"
             echo ", need to disable this!" >>$log
@@ -5450,6 +5490,14 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
                 commandlist[${#commandlist[@]}]="delete "$command" address "$insideaddress
             fi
             commandlist[${#commandlist[@]}]="delete "$command" ipv6"
+            # ACTION: check if firewall is on or of
+            # ACTION: check if firewall is on
+            # ACTION: on -> disable 
+            for lanif in "${fwlanlist[@]}"; do 
+                if [ "$lanif" == "$interface" ]; then
+                    echo "disable firewall for "$interface >>$log
+                fi
+            done
         fi
     done
 
@@ -5526,6 +5574,27 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
                 commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert retrans-timer 0"
                 commandlist[${#commandlist[@]}]="set "$command" ipv6 router-advert send-advert true"
                 commandlist[${#commandlist[@]}]="set "$command" ipv6 dup-addr-detect-transmits 1"
+                
+                # ACTION: check if firewall is on or of
+                # ACTION: check if checkbox lanfw is on or of
+                # ACTION: on/off -> disable 
+                # ACTION: off/on -> enable (if global ruleset exists)
+                # ACTION: check if firewall is on or of
+                fwon=""
+                for lanif in "${fwlanlist[@]}"; do 
+                    if [ "$lanif" == "$i" ]; then
+                        fwon="1"
+                    fi
+                done
+                fwuser=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | select (.olsrv6intf=="'$i'") | .firewallon' $INPUT)
+                # ACTION: on/off -> disable
+                if [ "$fwon" ] && [ "$fwuser" != "on" ]; then
+                    echo "disable firewall for "$i >>$log
+                fi
+                # ACTION: off/on -> enable (if global ruleset exists)
+                if [ "$fwon" == "" ] && [ "$fwuser" == "on" ] && [ "$firewallexists" ]; then
+                    echo "enable firewall for "$i >>$log
+                fi
             else
                 echo "Debug-LAN 3 - cannot configure "$i" as LAN without prefix/inside-address" >>$log
             fi
