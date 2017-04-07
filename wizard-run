@@ -5064,9 +5064,9 @@ load () {
             fi
         done
         # only if intfstatus=='' this interface may be LAN!
-        if [ "$intfstatus" == "" ] && [ -f "/run/radvd-"${v6ifinterface}".conf"  ]; then
+        if [ "$intfstatus" == "" ] && [ $(grep ${v6ifinterface} /etc/radvd.conf | wc -l) == "1"  ]; then
             lanon="on"
-            prefix=$(grep prefix "/run/radvd-"${v6ifinterface}".conf" | awk {'print $2'})
+            prefix=$(grep -A 25 ${v6ifinterface} /etc/radvd.conf | grep -m 1 prefix | awk {'print $2'} | sed -e "s/::\//::0\//")
         else
             lanon=""
             prefix=""
