@@ -5059,6 +5059,12 @@ load () {
     olsr6interfaces=''
     # get all running ethernet interfaces in format eth0;192.168.1.1/24
     v6interfacelist=$(ip -f inet6 addr | grep -v '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";")
+    #/opt/vyatta/config/active/interfaces/switch/switch0/firewall/out/ipv6-name/node.val -> lan_out0xff-6
+    for i in $(find /opt/vyatta/config/active/interfaces -name node.val | grep "/firewall/out/"); do
+        if [ "$(cat $i)" == "lan_out0xff-6" ]; then
+            fwlanlist[${#fwlanlist[@]}]=$(echo $i | awk -F/ {'print "$8'})
+        fi
+    done
     for v6if in $v6interfacelist; do
         v6ifinterface=$(echo $v6if | cut -d";" -f1)
         v6ifaddress=$(echo $v6if | cut -d";" -f2)
@@ -5074,6 +5080,12 @@ load () {
                 intfstatus='"enabled":"on",'
             fi
         done
+        firewallon=""
+        for lan in $fwlanlist; do
+            if [[ "$lan" == "${v6ifinterface}" ]]; then
+                firewallon="on"
+            fi
+        done
         # only if intfstatus=='' this interface may be LAN!
         if [ "$intfstatus" == "" ] && [ $(grep "interface "${v6ifinterface}" {" /etc/radvd.conf | wc -l) == "1"  ]; then
             lanon="on"
@@ -5082,7 +5094,7 @@ load () {
             lanon=""
             prefix=""
         fi
-        olsr6interfaces=$olsr6interfaces'{'$intfstatus'"olsrv6intf":"'${v6ifinterface}'","ipv6address":"'${v6ifaddress}'","lanon":"'${lanon}'","prefix":"'${prefix}'","origprefix":"'${prefix}'"},'
+        olsr6interfaces=$olsr6interfaces'{'$intfstatus'"olsrv6intf":"'${v6ifinterface}'","ipv6address":"'${v6ifaddress}'","lanon":"'${lanon}'","prefix":"'${prefix}'","origprefix":"'${prefix}'","firewallon":"'${firewallon}'"},'
     done
     olsr6interfaces=${olsr6interfaces%","}
 
