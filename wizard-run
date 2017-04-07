@@ -5064,9 +5064,9 @@ load () {
             fi
         done
         # only if intfstatus=='' this interface may be LAN!
-        if [ "$intfstatus" == "" ] && [ $(grep ${v6ifinterface} /etc/radvd.conf | wc -l) == "1"  ]; then
+        if [ "$intfstatus" == "" ] && [ $(grep "interface "${v6ifinterface}" {" /etc/radvd.conf | wc -l) == "1"  ]; then
             lanon="on"
-            prefix=$(grep -A 25 ${v6ifinterface} /etc/radvd.conf | grep -m 1 prefix | awk {'print $2'} | sed -e "s/::\//::0\//")
+            prefix=$(grep -A 25 "interface "${v6ifinterface}" {" /etc/radvd.conf | grep -m 1 prefix | awk {'print $2'} | sed -e "s/::\//::0\//")
         else
             lanon=""
             prefix=""
@@ -5323,7 +5323,7 @@ apply () {
     v6interfacelist=$(ip -f inet6 addr | grep -v '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";")
     for i in $(grep interface /etc/radvd.conf | awk {'print $2'} 2>/dev/null); do
         interface=$i
-        prefix=$(grep -A 25 $interface /etc/radvd.conf | grep -m 1 prefix | awk {'print $2'} | sed -e "s/::\//::0\//")
+        prefix=$(grep -A 25 "interface "$interface" {" /etc/radvd.conf | grep -m 1 prefix | awk {'print $2'} | sed -e "s/::\//::0\//")
         announced=$(grep -vE '^#|^$' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | grep $prefix | wc -l)
         userprefix=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | select (.olsrv6intf=="'$interface'") | .prefix' $INPUT)
         origprefix=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | select (.olsrv6intf=="'$interface'") | .origprefix' $INPUT)
@@ -5390,7 +5390,7 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             thisismesh=""
             continue
         fi
-        if [ $(grep "interface $i" /etc/radvd.conf | wc -l) == "0" ]; then
+        if [ $(grep "interface $i {" /etc/radvd.conf | wc -l) == "0" ]; then
             #enable radvd for this interface
             echo "Debug-LAN 2 - Need to enable Router-Advert for "$i >>$log
             prefix=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | select (.olsrv6intf=="eth0.6") | .prefix' $INPUT)
@@ -5449,7 +5449,7 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
                 echo "Debug-LAN 3 - cannot configure "$i" as LAN without prefix/inside-address" >>$log
             fi
         else
-            prefix=$(grep -A 25 $i /etc/radvd.conf | grep -m 1 prefix | awk {'print $2'} | sed -e "s/::\//::0\//")
+            prefix=$(grep -A 25 "interface "$i" {" /etc/radvd.conf | grep -m 1 prefix | awk {'print $2'} | sed -e "s/::\//::0\//")
             announced=$(grep -vE '^#|^$' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | grep $prefix | wc -l)
             if [ "$announced" == "0" ]; then
                 echo "Debug-LAN 2 - Announcement is missing, add lan-command to olsrd2.conf!" >>$log
