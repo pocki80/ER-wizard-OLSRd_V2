@@ -5047,7 +5047,7 @@ load () {
     olsr6meshif=$(awk -F= '/interface=/ {print $2}' /config/olsrd2/olsrd2.conf | tr -d \])
     olsr6interfaces=''
     # get all running ethernet interfaces in format eth0;192.168.1.1/24
-    v6interfacelist=$(ip -f inet6 addr | grep -v '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";" | grep -iv switch)
+    v6interfacelist=$(ip -f inet6 addr | grep -v '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";")
     for v6if in $v6interfacelist; do
         v6ifinterface=$(echo $v6if | cut -d";" -f1)
         v6ifaddress=$(echo $v6if | cut -d";" -f2)
@@ -5317,7 +5317,7 @@ apply () {
     # get all running ethernet interfaces in format eth0;192.168.1.1/24
     ####### check for LAN enabled devices
     lansenabled=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | .olsrv6intf' $INPUT)
-    v6interfacelist=$(ip -f inet6 addr | grep -v '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";" | grep -iv switch)
+    v6interfacelist=$(ip -f inet6 addr | grep -v '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";")
     for i in $(find /run/ -name radvd-*.conf 2>/dev/null); do
         interface=$(grep interface $i | awk {'print $2'})
         prefix=$(grep prefix $i | awk {'print $2'} | sed -e "s/::\//::0\//")
