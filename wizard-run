@@ -5235,6 +5235,7 @@ apply () {
     if [ "$initfirewall" == "on" ]; then
         echo "Initializing Firewall" >> $log
         commandlist[${#commandlist[@]}]="delete firewall group port-group WebServices0xFF"
+        commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF"
         commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF description \"Web Ports\""
         commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 443"
         commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 81"
