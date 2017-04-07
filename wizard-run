@@ -5180,7 +5180,7 @@ load () {
     tunnel4in6=",\"tunnel4in6addrv4\":\"$tunnel4in6addrv4\""
 
     echo -n "{\"success\":\"1\",\"data\":{"
-    echo -n "$packagestatus $updatestatus $autostart $nodenumbers &firewallcreated $olsr6config $tunnel4in6 $eui4addr $nodeidaddr $googlednson"
+    echo -n "$packagestatus $updatestatus $autostart $nodenumbers $firewallcreated $olsr6config $tunnel4in6 $eui4addr $nodeidaddr $googlednson"
     echo    "} ,\"definition\":{ } }"
 }
 
