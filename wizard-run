@@ -5665,6 +5665,7 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
         elif [ "$(echo $intf | grep switch | wc -l)" == "1" ]; then command="interfaces switch $intf ";
         fi
         if [ "$vif" ]; then command=$command"vif "$vif" "; fi
+        echo "debug-routerfw - i:"$v6ifinterface" 1:"$intfstatus" 2:"$fwon" 3:"$routerfirewall"." >>$log
         if [ "$intfstatus" == "" ] && [ "$fwon" ]; then
             echo "Disable local FW for non-mesh interface "$v6ifinterface >>$log
             commandlist[${#commandlist[@]}]="delete "$command" firewall local ipv6-name wan_local0xff-6"
