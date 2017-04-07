@@ -5445,6 +5445,12 @@ apply () {
                 echo "Debug-LAN 0 - LAN at "$interface" is not possible, as this iterface is a MESH/olsr2 interface" >>$log
             fi
         done
+        intf=$(echo $interface | awk -F. {'print $1'})
+        vif=$(echo $interface | awk -F. {'print $2'})
+        if   [ "$(echo $intf | grep eth | wc -l)" == "1" ];    then command="interfaces ethernet $intf ";
+        elif [ "$(echo $intf | grep br | wc -l)" == "1" ];     then command="interfaces bridge $intf ";
+        elif [ "$(echo $intf | grep switch | wc -l)" == "1" ]; then command="interfaces switch $intf ";
+        fi
         if [ "$thislanon" ]; then
             lanenabled="yes"
             echo ", all fine" >>$log
@@ -5465,10 +5471,12 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             # ACTION: on/off -> disable
             if [ "$fwon" ] && [ "$fwuser" != "on" ]; then
                 echo "disable firewall for "$interface >>$log
+                commandlist[${#commandlist[@]}]="delete "$command" firewall out ipv6-name lan_out0xff-6"
             fi
             # ACTION: off/on -> enable (if global ruleset exists)
             if [ "$fwon" == "" ] && [ "$fwuser" == "on" ] && [ "$firewallexists" ]; then
                 echo "enable firewall for "$interface >>$log
+                commandlist[${#commandlist[@]}]="set "$command" firewall out ipv6-name lan_out0xff-6"
             fi
         else
             lanenabled="no"
@@ -5476,12 +5484,6 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             if [ "$announced" == "1" ]; then
                 echo "Debug-LAN 1A- Announcement is active, remove lan-command from olsrd2.conf!" >>$log
                 sed -i $(grep -in "lan $prefix" /config/olsrd2/olsrd2.conf | grep -iv "#" | awk -F: {'print $1'})"d" /config/olsrd2/olsrd2.conf 2>>$log
-            fi
-            intf=$(echo $interface | awk -F. {'print $1'})
-            vif=$(echo $interface | awk -F. {'print $2'})
-            if   [ "$(echo $intf | grep eth | wc -l)" == "1" ];    then command="interfaces ethernet $intf ";
-            elif [ "$(echo $intf | grep br | wc -l)" == "1" ];     then command="interfaces bridge $intf ";
-            elif [ "$(echo $intf | grep switch | wc -l)" == "1" ]; then command="interfaces switch $intf ";
             fi
             if [ "$vif" ]; then command=$command"vif "$vif" "; fi
             insideaddress=$(echo $prefix | sed -e "s/::0\//::51de:b00b\//")
@@ -5496,6 +5498,7 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             for lanif in "${fwlanlist[@]}"; do 
                 if [ "$lanif" == "$interface" ]; then
                     echo "disable firewall for "$interface >>$log
+                    commandlist[${#commandlist[@]}]="delete "$command" firewall out ipv6-name lan_out0xff-6"
                 fi
             done
         fi
