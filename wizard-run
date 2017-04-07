@@ -5509,9 +5509,9 @@ echo $output >> $log
     fi
 
     if [ ${#commandlist[@]} \> 0 ]; then
-        echo "SCRIPT COMMANDS:"
+        echo "SCRIPT COMMANDS:" >>$log
         for i in "${commandlist[@]}"; do
-            echo $i 
+            echo $i >>$log
         done
     fi
 
