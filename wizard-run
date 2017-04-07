@@ -5669,9 +5669,6 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
         if [ "$intfstatus" == "" ] && [ "$fwon" ]; then
             echo "Disable local FW for non-mesh interface "$v6ifinterface >>$log
             commandlist[${#commandlist[@]}]="delete "$command" firewall local ipv6-name wan_local0xff-6"
-        elif [ "$intfstatus" ] && [ "$fwon" == "" ]; then
-            echo "Disable local FW for "$v6ifinterface >>$log
-            commandlist[${#commandlist[@]}]="delete "$command" firewall local ipv6-name wan_local0xff-6"
         elif [ "$intfstatus" ] && [ "$fwon" ] && [ "$routerfirewall" != "on" ]; then
             echo "Disable all local FWs for "$v6ifinterface >>$log
             commandlist[${#commandlist[@]}]="delete "$command" firewall local ipv6-name wan_local0xff-6"
