@@ -2,7 +2,7 @@
 
 #
 # EdgeMAX Wizard "ER-wizard-OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
-# Version 20170407/pkg-0.6/oonf-0.13.0
+# Version 20170408/pkg-0.6/oonf-0.13.0
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: OLSRd_V2
 #
@@ -5019,8 +5019,6 @@ load () {
     # end
     ####### check for firewall
 
-
-
     # try to extract node-id from one of current ipv6 addresses, take 1st found
     # can be    2a02:61:nnnn::
     # cannot be 2a02:61:0:: or 2a02:61::, thus can't be 2a02:61:0:ff: or 2a02:61:0:ee:
@@ -5070,6 +5068,16 @@ load () {
             fi
         fi
     done
+    for i in $(find /opt/vyatta/config/active/interfaces -name node.val | grep "/firewall/local/" | grep -v loopback); do
+        if [ "$(cat $i)" == "wan_local0xff-6" ]; then
+            if [ "$(echo $i | grep "/vif/" | wc -l)" == "0" ]; then
+                fwrouterlist[${#fwrouterlist[@]}]=$(echo $i | awk -F/ {'print $8'})
+            else
+                fwrouterlist[${#fwrouterlist[@]}]=$(echo $i | awk -F/ {'print $8"."$10'})
+            fi
+        fi
+    done
+
     for v6if in $v6interfacelist; do
         v6ifinterface=$(echo $v6if | cut -d";" -f1)
         v6ifaddress=$(echo $v6if | cut -d";" -f2)
@@ -5083,6 +5091,11 @@ load () {
         for mesh in $olsr6meshif; do
             if [[ "$mesh" == "${v6ifinterface}" ]]; then
                 intfstatus='"enabled":"on",'
+                for routerfw in "${fwrouterlist[@]}"; do
+                    if [[ "$routerfw" == "${v6ifinterface}" ]]; then
+                        routerfirewall=',"routerfirewall":"on"'
+                    fi
+                done
             fi
         done
         firewallon=""
@@ -5197,7 +5210,7 @@ load () {
     tunnel4in6=",\"tunnel4in6addrv4\":\"$tunnel4in6addrv4\""
 
     echo -n "{\"success\":\"1\",\"data\":{"
-    echo -n "$packagestatus $updatestatus $autostart $nodenumbers $firewallcreated $olsr6config $tunnel4in6 $eui4addr $nodeidaddr $googlednson"
+    echo -n "$packagestatus $updatestatus $autostart $nodenumbers $firewallcreated $routerfirewall $olsr6config $tunnel4in6 $eui4addr $nodeidaddr $googlednson"
     echo    "} ,\"definition\":{ } }"
 }
 
@@ -5425,6 +5438,15 @@ apply () {
             fi
         fi
     done
+    for i in $(find /opt/vyatta/config/active/interfaces -name node.val | grep "/firewall/local/" | grep -v loopback); do
+        if [ "$(cat $i)" == "wan_local0xff-6" ]; then
+            if [ "$(echo $i | grep "/vif/" | wc -l)" == "0" ]; then
+                fwrouterlist[${#fwrouterlist[@]}]=$(echo $i | awk -F/ {'print $8'})
+            else
+                fwrouterlist[${#fwrouterlist[@]}]=$(echo $i | awk -F/ {'print $8"."$10'})
+            fi
+        fi
+    done
 
     for i in $(grep interface /etc/radvd.conf | awk {'print $2'} 2>/dev/null); do
         interface=$i
@@ -5593,10 +5615,12 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
                 # ACTION: on/off -> disable
                 if [ "$fwon" ] && [ "$fwuser" != "on" ]; then
                     echo "disable firewall for "$i >>$log
+                    commandlist[${#commandlist[@]}]="delete "$command" firewall out ipv6-name lan_out0xff-6"
                 fi
                 # ACTION: off/on -> enable (if global ruleset exists)
                 if [ "$fwon" == "" ] && [ "$fwuser" == "on" ] && [ "$firewallexists" ]; then
                     echo "enable firewall for "$i >>$log
+                    commandlist[${#commandlist[@]}]="set "$command" firewall out ipv6-name lan_out0xff-6"
                 fi
             else
                 echo "Debug-LAN 3 - cannot configure "$i" as LAN without prefix/inside-address" >>$log
@@ -5612,6 +5636,46 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             fi
         fi
     done
+
+    # check local firewall
+    routerfirewall=$(jq -M -r '.routerfirewall' $INPUT)
+    for v6if in $v6interfacelist; do
+        v6ifinterface=$(echo $v6if | cut -d";" -f1)
+        v6ifinterface=$(echo ${v6ifinterface} | cut -d@ -f1)
+        if [ "$v6ifinterface" == "lo" ]; then
+            continue
+        fi
+        intfstatus=""
+        fwon=""
+        for mesh in $olsr6meshif; do
+            if [[ "$mesh" == "${v6ifinterface}" ]]; then
+                # this is a mesh if
+                intfstatus="1"
+                for routerfw in "${fwrouterlist[@]}"; do
+                    if [[ "$routerfw" == "${v6ifinterface}" ]]; then
+                        fwon="1"
+                    fi
+                done
+            fi
+        done
+        intf=$(echo $v6ifinterface | awk -F. {'print $1'})
+        vif=$(echo $v6ifinterface | awk -F. {'print $2'})
+        if   [ "$(echo $intf | grep eth | wc -l)" == "1" ];    then command="interfaces ethernet $intf ";
+        elif [ "$(echo $intf | grep br | wc -l)" == "1" ];     then command="interfaces bridge $intf ";
+        elif [ "$(echo $intf | grep switch | wc -l)" == "1" ]; then command="interfaces switch $intf ";
+        fi
+        if [ "$vif" ]; then command=$command"vif "$vif" "; fi
+
+        if [ "$intfstatus" == "" ] && [ "$fwon" ]; then
+            echo "Disable local FW for "$v6ifinterface >>$log
+            commandlist[${#commandlist[@]}]="delete "$command" firewall local ipv6-name wan_local0xff-6"
+        fi
+        if [ "$intfstatus" ] && [ "$fwon" == "" ] $$ [ "$routerfirewall" == "on" ] && [ "$firewallexists" ]; then
+            echo "Enable local FW for "$v6ifinterface >>$log
+            commandlist[${#commandlist[@]}]="set "$command" firewall local ipv6-name wan_local0xff-6"
+        fi
+    done
+
 
     if [ ${#commandlist[@]} \> 0 ]; then
         echo "Applying script commands..." >>$log
