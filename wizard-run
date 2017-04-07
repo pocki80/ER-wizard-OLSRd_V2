@@ -5204,9 +5204,9 @@ apply () {
             rm /tmp/result.txt >>$log 2>>$log
             rm -Rf /tmp/$gitowner-$gitrepo* >>$log 2>>$log
             chmod 755 $(dirname $olsrdwizard)"/"wizard-run >>$log 2>>$log
-            $(dirname $olsrdwizard)"/"wizard-run load >>$log 2>>$log
-            echo "{\"success\":\"1\"}"
             echo "EdgeMAX OLSRd_V2 Wizard STOPPED after upgrade $(date +%H:%M:%S.%N) - Session="$$ >> $log
+            echo "Triggering initial wizard-load of new version to finish installation..." >> $log
+            $(dirname $olsrdwizard)"/"wizard-run load >>$log 2>>$log
             exit 0
         fi
     fi
