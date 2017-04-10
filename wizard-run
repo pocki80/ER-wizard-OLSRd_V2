@@ -10,7 +10,7 @@
 # Github repository (olsrd2  pkg): https://github.com/pocki80/ER-OLSRd_V2
 #
 # Works on all EdgeRouter and EdgePoint Devices (system version 1.9.0+)
-#!
+#
 #
 
 ACTION=$1
