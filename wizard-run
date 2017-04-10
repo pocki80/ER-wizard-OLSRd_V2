@@ -5232,7 +5232,7 @@ load () {
     # get all variables together for output
     olsr6config=",\"olsr6config\":[$olsr6interfaces]"
     tunnel4in6=",\"tunnel4in6addrv4\":\"$tunnel4in6addrv4\""
-    ipv6announce",\"ipv6announce\":[$ipv6attachednets]"
+    ipv6announce=",\"ipv6announce\":[$ipv6attachednets]"
 
     echo -n "{\"success\":\"1\",\"data\":{"
     echo -n "$packagestatus $updatestatus $autostart $nodenumbers $firewallcreated $routerfirewall $olsr6config $ipv6announce $tunnel4in6 $eui4addr $nodeidaddr $googlednson"
@@ -5733,6 +5733,60 @@ output=$(cat $tfile)
 rm -f $tfile
 echo "${output}" >> $log
     fi
+
+    ####### check announcements 
+    #
+    all_announced_lans=$(grep -vE '^#|^$' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | sed -e "s/lan//" | sed -e "s/ //")
+    all_advertized_lans=$(grep -m 1 prefix /etc/radvd.conf | awk {'print $2'} | sed -e "s/::\//::0\//")
+    lans_user=$(jq -M -r '.ipv6announce[] | .prefix' $INPUT)
+    ipv6attachednets=()
+    # get current settings
+    for announced in ${all_announced_lans[@]}; do
+        current="1"
+        for advertized in ${all_advertized_lans[@]}; do
+            if [ "$announced" == "$advertized" ]; then
+                current=""
+            fi
+        done
+        if [ "$current" ]; then
+            ipv6attachednets[${#ipv6attachednets[@]}]="$announced"
+            current=""
+        fi
+    done
+    #check to disable/remove
+    current=""
+    for net in ${ipv6attachednets[@]}; do
+        for user in ${lans_user[@]}; do
+            if [ "$net" == "$user" ]; then
+                current="1"
+            fi
+        done
+        if [ "$current" ]; then
+            current=""
+        else
+            echo "Debug-ATTACHED - Announcement is active, remove lan-command from olsrd2.conf!" >>$log
+            sed -i $(grep -in "lan $net" /config/olsrd2/olsrd2.conf | grep -iv "#" | awk -F: {'print $1'})"d" /config/olsrd2/olsrd2.conf 2>>$log
+        fi
+    done
+    #check to enable/insert
+    for user in ${lans_user[@]}; do
+        for net in ${ipv6attachednets[@]}; do
+            if [ "$net" == "$user" ]; then
+                current="1"
+            fi
+        done
+        if [ "$current" ]; then
+            current=""
+        else
+            echo "Debug-ATTACHED - Announcement is missing, add lan-command to olsrd2.conf!" >>$log
+            linenumber=$(($(grep -inE -m 4 "announce user-block for clients|lan|\[olsrv2\]" /config/olsrd2/olsrd2.conf | tail -n 1 | awk -F: {'print $1'})+1))
+            sed -i $linenumber'i\
+lan '$user /config/olsrd2/olsrd2.conf 2>>$log
+        fi
+    done
+
+    # end
+    ####### check announcements 
 
     ####### check autostart
     # 
