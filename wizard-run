@@ -4909,6 +4909,7 @@ U4NrfH9qlJV5LIQnKzp9VvV2kFvhFFiWR92+JrIQSQaqYo3+jpZ8ILaLsIeQuwzBHYoFM7LrpF2P
 pSkoZePStiwENpt5aOP41BbVeFMnpKDVYaM5k73lE/YEAAAAj5Bo08uCtPgAAebqEICQWP/s8cSx
 xGf7AgAAAAAEWVo=
 " | base64 -d >/tmp/$packagefile
+#filecontentend
 if [[ $? == 0 ]]; then 
     echo "extracted package file: "$packagefile" without error - Session="$$ >>$log
 else
