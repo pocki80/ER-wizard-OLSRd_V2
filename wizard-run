@@ -5104,6 +5104,12 @@ load () {
                 firewallon="on"
             fi
         done
+        routerfw=""
+        for wan in "${fwrouterlist[@]}"; do
+            if [[ "$wan" == "${v6ifinterface}" ]]; then
+                routerfw="on"
+            fi
+        done
         # only if intfstatus=='' this interface may be LAN!
         if [ "$intfstatus" == "" ] && [ $(grep "interface "${v6ifinterface}" {" /etc/radvd.conf | wc -l) == "1"  ]; then
             lanon="on"
@@ -5112,7 +5118,7 @@ load () {
             lanon=""
             prefix=""
         fi
-        olsr6interfaces=$olsr6interfaces'{'$intfstatus'"olsrv6intf":"'${v6ifinterface}'","ipv6address":"'${v6ifaddress}'","lanon":"'${lanon}'","prefix":"'${prefix}'","origprefix":"'${prefix}'","firewallon":"'${firewallon}'"},'
+        olsr6interfaces=$olsr6interfaces'{'$intfstatus'"olsrv6intf":"'${v6ifinterface}'","ipv6address":"'${v6ifaddress}'","lanon":"'${lanon}'","prefix":"'${prefix}'","origprefix":"'${prefix}'","firewallon":"'${firewallon}'","routerfw":"'${routerfw}'"},'
     done
     olsr6interfaces=${olsr6interfaces%","}
 
