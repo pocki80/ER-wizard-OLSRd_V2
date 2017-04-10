@@ -2,7 +2,7 @@
 
 #
 # EdgeMAX Wizard "ER-wizard-OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
-# Version 20170408/pkg-0.6/oonf-0.13.0
+# Version 20170410/pkg-0.6/oonf-0.13.0
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: OLSRd_V2
 #
@@ -5205,12 +5205,31 @@ load () {
     # end
     ####### google v6-dns assignment check
 
- # get all variables together for output
+    #check for additional anouncements
+    all_announced_lans=$(grep -vE '^#|^$' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | sed -e "s/lan//" | sed -e "s/ //")
+    all_advertized_lans=$(grep -m 1 prefix /etc/radvd.conf | awk {'print $2'} | sed -e "s/::\//::0\//")
+    ipv6attachednets=""
+    for announced in ${all_announced_lans[@]}; do
+        current="1"
+        for advertized in ${all_advertized_lans[@]}; do
+            if [ "$announced" == "$advertized" ]; then
+                current=""
+            fi
+        done
+        if [ "$current" ]; then
+            ipv6attachednets=$ipv6attachednets'{"prefix":"'$announced'"},'
+            current=""
+        fi
+    done
+    ipv6attachednets=${ipv6attachednets%","}
+
+    # get all variables together for output
     olsr6config=",\"olsr6config\":[$olsr6interfaces]"
     tunnel4in6=",\"tunnel4in6addrv4\":\"$tunnel4in6addrv4\""
+    ipv6announce",\"ipv6announce\":[$ipv6attachednets]"
 
     echo -n "{\"success\":\"1\",\"data\":{"
-    echo -n "$packagestatus $updatestatus $autostart $nodenumbers $firewallcreated $routerfirewall $olsr6config $tunnel4in6 $eui4addr $nodeidaddr $googlednson"
+    echo -n "$packagestatus $updatestatus $autostart $nodenumbers $firewallcreated $routerfirewall $olsr6config $ipv6announce $tunnel4in6 $eui4addr $nodeidaddr $googlednson"
     echo    "} ,\"definition\":{ } }"
 }
 
@@ -5447,7 +5466,6 @@ apply () {
             fi
         fi
     done
-
     for i in $(grep interface /etc/radvd.conf | awk {'print $2'} 2>/dev/null); do
         interface=$i
         prefix=$(grep -A 25 "interface "$interface" {" /etc/radvd.conf | grep -m 1 prefix | awk {'print $2'} | sed -e "s/::\//::0\//")

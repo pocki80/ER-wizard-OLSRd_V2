@@ -2,17 +2,18 @@
 
 EdgeMAX Wizard "OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201704080
+versioninfo=201704100
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 
 -->
 <div class="instructions">
-    <h3>OLSRd_V2</h3>
+  DNS host names configuration
 </div>
 <legend style="position:absolute;right:0px;padding:5px;">
     <center>EdgeMAX Wizard "OLSRd_V2"<br>created 03/2017 by CPO for FunkFeuer.at<br>
-    Version 20170408/pkg-0.6/oonf-0.13.0</center>
+    Version 20170410/pkg-0.6/oonf-0.13.0</center>
 </legend>
+
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
   <table border="0">
     <tr><td style="vertical-align:middle">OLSRd2 Status:</td><td><input style="right:10px" id="olsrd2status" name="olsrd2status" type="text" size="60" disabled /></td></tr>
@@ -25,6 +26,7 @@ versioninfo=201704080
   <input id="reset2defaults" name="reset2defaults"  type="checkbox" /><span> Reset olsrd2.conf to default-settings on 'Apply'</span><br>
 </div>
 <br><br>
+
 <fieldset id="ipv6olsrd" name="ipv6olsrd" class="primary expanded">
     <legend>OLSRd2 IPv6</legend>
     <table border="0">
@@ -41,24 +43,28 @@ versioninfo=201704080
       <tr><td style="vertical-align:middle">...hex...          </td><td><input style="right:10px" id="nodeidhex" name="nodeidhex" type="text" size="10" disabled /><input style="right:10px" id="routeridhex" name="routeridhex" type="text" size="4" disabled /><input style="right:10px" id="nicidhex" name="nicidhex" type="text" size="2" disabled /></td></tr>
       <tr><td style="vertical-align:middle">4in6 IPv4 </td><td><input style="right:10px" id="tunnel4in6addrv4" name="tunnel4in6addrv4" type="text" size="20" /></td></tr>
     </table>
+</fieldset>
 
+<fieldset id="ipv6ifs" name="ipv6ifs" class="primary expanded">
+    <legend>Interfaces</legend>
     <div class="addable" data-min="1" data-max="1" data-object="olsr6config" data-objectify="1">
-        <!--
-        <div><span><input name="olsrd4enabled" type="checkbox" /></span> Enable OLSR daemon</div>
-        <div class="clear"></div><br><div class="clear"></div>
-        <div><span><input name="olsrd4runonboot" type="checkbox" /></span> Run OLSR daemon<br>(on boot, if enabled)</div>
-        <div class="clear"></div><br><div class="clear"></div>
-        -->
-        <span><b><u>Interfaces:</u></b></span>
+        <table><tr>
+        <td width=122 align=right>MESH,FW</td>
+        <td width=230 align=center>IPv6-Address</td>
+        <td width=30>LAN</td>
+        <td width=160 align=center>Prefix</td>
+        <td>Firewall</td>
+        </tr></table>
         <div class="addable-template" style="padding-top:0px;">
             <div class="multi">
-                <div>Enable:    <input name="enabled" type="checkbox" onclick="validate()" /></div>
-                <div><input id="olsrinterface" name="olsrv6intf" size="5" disabled /></div>
-                <div><input name="ipv6address" size="28" disabled /></div>
-                <div>LAN:    <input name="lanon" type="checkbox" onclick="validate()" /></div>
-                <div><input name="prefix" size="18" disabled /></div>
+                <div><input id="olsrinterface" name="olsrv6intf" size="6" disabled /></div>
+                <div><input name="enabled" type="checkbox" onclick="validate()" /></div>
+                <div><input name="routerfw" type="checkbox" onclick="validate()" /></div>
+                <div><input name="ipv6address" size="33" disabled /></div>
+                <div><input name="lanon" type="checkbox" onclick="validate()" /></div>
+                <div><input name="prefix" size="22" disabled /></div>
                 <div><input name="origprefix" type="hidden" size="20" disabled /></div>
-                <div>FW:    <input name="firewallon" type="checkbox" onclick="validate()" /></div>
+                <div><input name="firewallon" type="checkbox" onclick="validate()" /></div>
             </div>
         </div>
         <div class="addable-container"></div>
@@ -67,7 +73,20 @@ versioninfo=201704080
     </div>
 </fieldset>
 
-&nbsp;
+<fieldset id="ipv6announce" name="ipv6announce" class="primary expanded">
+<legend>Additional OLSRv2 Announcements</legend>
+<div class="addable" data-min="0" data-max="99" data-object="ipv6announce" data-objectify="1">
+<div class="addable-template" style="padding-top:0px;">
+<div class="multi">
+<span> class="text"</span>
+<span><input name="prefix" size="25" /></span>
+<span><button type="button" class="addable-remove">Remove</button></span>
+</div>
+</div>
+<div class="addable-container"></div>
+<button type="button" class="addable-add">Add</button>
+</div>
+</fieldset>
 <script>
 function colors() {
     var input = document.getElementById('olsrd2status');
@@ -99,18 +118,19 @@ function colors() {
     document.getElementById('nicidhex').disabled = true;
     document.getElementById('firewallcreated').disabled = true;
     document.getElementById('tunnel4in6addrv4').disabled = true;
-    var v6nodes = document.getElementById("ipv6olsrd").getElementsByTagName('*');
+    var v6nodes = document.getElementById("ipv6ifs").getElementsByTagName('*');
     for(var i=0; i<v6nodes.length; i++) {
         if (v6nodes[i].name == "olsrv6intf") {
             v6nodes[i].disabled = true;
         } else if (v6nodes[i].name == "ipv6address") {
             v6nodes[i].disabled = true;
-            if (v6nodes[i].value.match(/fe80::/)) {
-                v6nodes[i].style.color = "grey";
-            } else {
-                v6nodes[i].style.color = "black";
-            }
         } else if (v6nodes[i].name == "prefix") {
+            v6nodes[i].disabled = true;
+        } else if (v6nodes[i].name == "enabled") {
+            // not implemented to wizard-run already
+            v6nodes[i].disabled = true;
+        } else if (v6nodes[i].name == "routerfw") {
+            // not implemented to wizard-run already
             v6nodes[i].disabled = true;
         }
     }
