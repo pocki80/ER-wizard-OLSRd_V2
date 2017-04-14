@@ -2,7 +2,7 @@
 
 #
 # EdgeMAX Wizard "ER-wizard-OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
-# Version 20170410/pkg-0.6/oonf-0.13.0
+# Version 20170414/pkg-0.6/oonf-0.13.0
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: OLSRd_V2
 #
@@ -10,7 +10,7 @@
 # Github repository (olsrd2  pkg): https://github.com/pocki80/ER-OLSRd_V2
 #
 # Works on all EdgeRouter and EdgePoint Devices (system version 1.9.0+)
-#....
+#
 #
 
 ACTION=$1
@@ -5113,7 +5113,7 @@ load () {
             fi
         done
         # only if intfstatus=='' this interface may be LAN!
-        if [ "$intfstatus" == "" ] && [ $(grep "interface "${v6ifinterface}" {" /etc/radvd.conf | wc -l) == "1"  ]; then
+        if [ "$intfstatus" == "" ] && [ -f /etc/radvd.conf ] && [ $(grep "interface "${v6ifinterface}" {" /etc/radvd.conf | wc -l) == "1" ]; then
             lanon="on"
             prefix=$(grep -A 25 "interface "${v6ifinterface}" {" /etc/radvd.conf | grep -m 1 prefix | awk {'print $2'} | sed -e "s/::\//::0\//")
         else
@@ -5215,7 +5215,11 @@ load () {
 
     #check for additional anouncements
     all_announced_lans=$(grep -vE '^#|^$' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | sed -e "s/lan//" | sed -e "s/ //")
-    all_advertized_lans=$(grep -m 1 prefix /etc/radvd.conf | awk {'print $2'} | sed -e "s/::\//::0\//")
+    if [ -f /etc/radvd.conf ]; then
+        all_advertized_lans=$(grep -m 1 prefix /etc/radvd.conf | awk {'print $2'} | sed -e "s/::\//::0\//")
+    else
+        all_advertized_lans=()
+    fi
     ipv6attachednets=""
     for announced in ${all_announced_lans[@]}; do
         current="1"
@@ -5474,6 +5478,7 @@ apply () {
             fi
         fi
     done
+    if [ -f /etc/radvd.conf ]; then
     for i in $(grep interface /etc/radvd.conf | awk {'print $2'} 2>/dev/null); do
         interface=$i
         prefix=$(grep -A 25 "interface "$interface" {" /etc/radvd.conf | grep -m 1 prefix | awk {'print $2'} | sed -e "s/::\//::0\//")
@@ -5551,6 +5556,7 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             done
         fi
     done
+    fi
 
     # only 1 lan can be enabled with this code: skip loop if more than one was selected!
     # establish mechanism to enable 2+ interfaces with auto-detect free inside-v6-address and -prefix!
@@ -5570,7 +5576,7 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             thisismesh=""
             continue
         fi
-        if [ $(grep "interface $i {" /etc/radvd.conf | wc -l) == "0" ]; then
+        if [ ! -f /etc/radvd.conf ] || [ $(grep "interface $i {" /etc/radvd.conf | wc -l) == "0" ]; then
             #enable radvd for this interface
             echo "Debug-LAN 2 - Need to enable Router-Advert for "$i >>$log
             prefix=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | select (.olsrv6intf=="eth0.6") | .prefix' $INPUT)
@@ -5651,7 +5657,7 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             else
                 echo "Debug-LAN 3 - cannot configure "$i" as LAN without prefix/inside-address" >>$log
             fi
-        else
+        elif [ -f /etc/radvd.conf ]; then
             prefix=$(grep -A 25 "interface "$i" {" /etc/radvd.conf | grep -m 1 prefix | awk {'print $2'} | sed -e "s/::\//::0\//")
             announced=$(grep -vE '^#|^$' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | grep $prefix | wc -l)
             if [ "$announced" == "0" ]; then
@@ -5739,7 +5745,11 @@ echo "${output}" >> $log
     ####### check announcements 
     #
     all_announced_lans=$(grep -vE '^#|^$' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | sed -e "s/lan//" | sed -e "s/ //")
-    all_advertized_lans=$(grep -m 1 prefix /etc/radvd.conf | awk {'print $2'} | sed -e "s/::\//::0\//")
+    if [ -f /etc/radvd.conf ]; then
+        all_advertized_lans=$(grep -m 1 prefix /etc/radvd.conf | awk {'print $2'} | sed -e "s/::\//::0\//")
+    else
+        all_advertized_lans=()
+    fi
     lans_user=$(jq -M -r '.ipv6announce[] | .prefix' $INPUT)
     ipv6attachednets=()
     # get current settings
