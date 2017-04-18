@@ -2,8 +2,10 @@
 
 EdgeMAX Wizard "OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201704140
+versioninfo=201704180
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
+autoupdate=201704140
+^-- set autoupdate the same version identifier to allow autoupdates
 
 -->
 <div class="instructions">
@@ -11,7 +13,7 @@ versioninfo=201704140
 </div>
 <legend style="position:absolute;right:0px;padding:5px;">
     <center>EdgeMAX Wizard "OLSRd_V2"<br>created 03/2017 by CPO for FunkFeuer.at<br>
-    Version 20170414/pkg-0.6/oonf-0.13.0</center>
+    Version 20170418/pkg-0.6/oonf-0.13.0</center>
 </legend>
 
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
@@ -21,6 +23,7 @@ versioninfo=201704140
            <input id="updatefromgithub" name="updatefromgithub"  type="checkbox" /><span> Upgrade on 'Apply'!</span><br></td></tr>
   </table>
   <br>
+  <input id="autoupdatefromgithub" name="autoupdatefromgithub" type="checkbox" /><span> Upgrade Wizard from GitHub <b>automatically</b></span><br>
   <input id="autostart" name="autostart"  type="checkbox" /><span> Enable OLSRd2 daemon and Start-on-Boot </span><br>
   <input id="olsrdrestart" name="olsrdrestartnow"  type="checkbox" /><span> Restart OLSRv2 daemon on 'Apply'</span><br>
   <input id="reset2defaults" name="reset2defaults"  type="checkbox" /><span> Reset olsrd2.conf to default-settings on 'Apply'</span><br>
