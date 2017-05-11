@@ -2,7 +2,7 @@
 
 #
 # EdgeMAX Wizard "ER-wizard-OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
-# Version 20170418/pkg-0.6/oonf-0.13.0
+# Version 20170511/pkg-0.6/oonf-0.13.0
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: OLSRd_V2
 #
@@ -29,12 +29,12 @@ gitbranch="master"
 # DO NOT EDIT BELOW HERE !
 #
 
-echo "EdgeMAX OLSRd_V2 Wizard started $(date +%H:%M:%S.%N) - Session="$$ >>$log
+echo "EdgeMAX OLSRd_V2 Wizard started $(date +%Y-%m-%d/%H:%M:%S.%N) - Session="$$ >>$log
 
 #base64begin 
 # !dont edit or remove this comment!
 # first run of wizard, so load and install package
-echo "Installation started $(date +%H:%M:%S.%N) - Session="$$ >>$log
+echo "Installation started $(date +%Y-%m-%d/%H:%M:%S.%N) - Session="$$ >>$log
 
 # download source package
 # scp ubnt@193.238.158.8:/home/ubnt/ER-OLSRd_V2/builds/0xff-er-olsrd-v2_0.1_mipsel.deb /tmp/0xff-er-olsrd-v2_0.1_mipsel.deb
@@ -5281,7 +5281,7 @@ apply () {
             rm /tmp/result.txt >>$log 2>>$log
             rm -Rf /tmp/$gitowner-$gitrepo* >>$log 2>>$log
             chmod 755 $(dirname $olsrdwizard)"/"wizard-run >>$log 2>>$log
-            #echo "EdgeMAX OLSRd_V2 Wizard STOPPED after upgrade $(date +%H:%M:%S.%N) - Session="$$ >> $log
+            #echo "EdgeMAX OLSRd_V2 Wizard STOPPED after upgrade $(date +%Y-%m-%d/%H:%M:%S.%N) - Session="$$ >> $log
             echo "Triggering initial wizard-load of new version to finish installation..." >> $log
             $(dirname $olsrdwizard)"/"wizard-run load >>$log 2>>$log
             echo "{\"success\":\"1\"}"
@@ -5577,6 +5577,7 @@ apply () {
         if   [ "$(echo $intf | grep eth | wc -l)" == "1" ];    then command="interfaces ethernet $intf ";
         elif [ "$(echo $intf | grep br | wc -l)" == "1" ];     then command="interfaces bridge $intf ";
         elif [ "$(echo $intf | grep switch | wc -l)" == "1" ]; then command="interfaces switch $intf ";
+        if [ "$vif" ]; then command=$command"vif "$vif" "; fi
         fi
         if [ "$thislanon" ]; then
             lanenabled="yes"
@@ -5951,4 +5952,4 @@ case "$ACTION" in
         ;;
 esac
 
-echo "EdgeMAX OLSRd_V2 Wizard ended $(date +%H:%M:%S.%N) - Session="$$ >> $log
+echo "EdgeMAX OLSRd_V2 Wizard ended $(date +%Y-%m-%d/%H:%M:%S.%N) - Session="$$ >> $log
