@@ -2,7 +2,7 @@
 
 #
 # EdgeMAX Wizard "ER-wizard-OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
-# Version 20170511/pkg-0.6/oonf-0.13.0
+# Version 20170717/pkg-0.6/oonf-0.13.0
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: OLSRd_V2
 #
@@ -5059,7 +5059,6 @@ load () {
     olsr6interfaces=''
     # get all running ethernet interfaces in format eth0;192.168.1.1/24
     v6interfacelist=$(ip -f inet6 addr | grep -v '2a02:61:0:ee:1:ffff:'  | awk '/^[0-9]:*|inet/ { print $2 }'  | sed ':a;N;$!ba;s/:\n/;/g'  | grep ";")
-    #/opt/vyatta/config/active/interfaces/switch/switch0/firewall/out/ipv6-name/node.val -> lan_out0xff-6
     #/opt/vyatta/config/active/interfaces/ethernet/eth0/vif/6/firewall/out/ipv6-name/node.val
     for i in $(find /opt/vyatta/config/active/interfaces -name node.val | grep "/firewall/out/"); do
         if [ "$(cat $i)" == "lan_out0xff-6" ]; then
@@ -5188,14 +5187,17 @@ load () {
     # currently assigned
     currenteui64address=$(ip -6 addr show lo | grep global | grep '2a02:61:0:ff:' | awk {'print $2'} | head -n 1)
     # EUI64 suitable for this unique EdgeRouter device (turn bit-7 of byte-1)
-    if [ $(ip -6 link show switch0 | grep link/ether | awk {'print $2'} | wc -w) == "1" ]; then
+    # /usr/sbin/ubnt-hal show-version | grep "HW S/N" | awk {'print $3'}
+    basemac=$(ip -6 link show switch0 | grep link/ether | awk {'print $2'})
+    [ "$basemac" == "" ] && basemac=$(ip -6 link show eth0 | grep link/ether | awk {'print $2'})
+    if [ "$basemac" ]; then
         D2B=({0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1})
-        byte=$((16#$(ip -6 link show switch0 | grep link/ether | awk {'print $2'} | awk -F: {'print $1'})))
+        byte=$((16#$(echo $basemac | awk -F: {'print $1'})))
         bit=${D2B[$byte]}
         hexneu=$(printf '%02x' "$((2#$(echo -n ${bit:0:6}; [ ${bit:6:1} == "0" ] && echo -n "1" || echo -n "0"; echo ${bit:7:1})))")
-        eui64address=$(ip -6 link show switch0 | grep link/ether | awk {'print $2'} | awk -F: {'print "2a02:61:0:ff:'$hexneu'"$2":"$3"ff:fe"$4":"$5$6"/128";'})
+        eui64address=$(echo $basemac | awk -F: {'print "2a02:61:0:ff:'$hexneu'"$2":"$3"ff:fe"$4":"$5$6"/128";'})
     else
-        eui64address="err: MAC address of switch0 not found"
+        eui64address="err: MAC address of switch0 or eth0 not found"
     fi
     eui4addr=",\"eui4address\":\"$eui64address\""
     if [ "$currenteui64address" == "$eui64address" ]; then
@@ -5433,14 +5435,16 @@ apply () {
     # currently assigned
     currenteui64address=$(ip -6 addr show lo | grep global | grep '2a02:61:0:ff:' | awk {'print $2'} | head -n 1)
     # EUI64 suitable for this unique EdgeRouter device (turn bit-7 of byte-1)
-    if [ $(ip -6 link show switch0 | grep link/ether | awk {'print $2'} | wc -w) == "1" ]; then
+    basemac=$(ip -6 link show switch0 | grep link/ether | awk {'print $2'})
+    [ "$basemac" == "" ] && basemac=$(ip -6 link show eth0 | grep link/ether | awk {'print $2'})
+    if [ "$basemac" ]; then
         D2B=({0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1})
-        byte=$((16#$(ip -6 link show switch0 | grep link/ether | awk {'print $2'} | awk -F: {'print $1'})))
+        byte=$((16#$(echo $basemac | awk -F: {'print $1'})))
         bit=${D2B[$byte]}
         hexneu=$(printf '%02x' "$((2#$(echo -n ${bit:0:6}; [ ${bit:6:1} == "0" ] && echo -n "1" || echo -n "0"; echo ${bit:7:1})))")
-        eui64address=$(ip -6 link show switch0 | grep link/ether | awk {'print $2'} | awk -F: {'print "2a02:61:0:ff:'$hexneu'"$2":"$3"ff:fe"$4":"$5$6"/128";'})
+        eui64address=$(echo $basemac | awk -F: {'print "2a02:61:0:ff:'$hexneu'"$2":"$3"ff:fe"$4":"$5$6"/128";'})
     else
-        eui64address="err: MAC address of switch0 not found"
+        eui64address="err: MAC address of switch0/eth0 not found"
     fi
     if [ "$eui4addron" == "on" ]; then
         if [ "$currenteui64address" != "$eui64address" ] && [ "$hexneu" ]; then
