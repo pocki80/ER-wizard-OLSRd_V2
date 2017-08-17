@@ -5164,6 +5164,71 @@ fi
 dpkg -i /tmp/$packagefile >>$log
 rm -f /tmp/$packagefile >>$log
 
+##################
+# this script corrects EUI64 address on edgerouters from switch0 to eth0
+corrlog="/var/log/0xff_correct_EUI64.log"
+echo "Started $(date +%Y-%m-%d/%H:%M:%S.%N) - Session="$$ >>$corrlog
+currenteui64address=$(ip -6 addr show lo | grep global | grep '2a02:61:0:ff:' | awk {'print $2'} | head -n 1)
+echo "CURRENT: "$currenteui64address >>$log
+basemac=$(ip -6 link show eth0 | grep link/ether | awk {'print $2'})
+echo "BASEMAC: "$basemac >>$log
+if [ "$currenteui64address" ] && [ "$basemac" ]; then
+D2B=({0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1})
+byte=$((16#$(echo $basemac | awk -F: {'print $1'})))
+bit=${D2B[$byte]}
+hexneu=$(printf '%02x' "$((2#$(echo -n ${bit:0:6}; [ ${bit:6:1} == "0" ] && echo -n "1" || echo -n "0"; echo ${bit:7:1})))")
+eui64address=$(echo $basemac | awk -F: {'print "2a02:61:0:ff:'$hexneu'"$2":"$3"ff:fe"$4":"$5$6"/128";'})
+echo "CORRECT: "$eui64address >>$corrlog
+if [ "$eui64address" ] && [ $(echo $currenteui64address | grep -c $eui64address) -eq 0 ]; then
+echo "change EUI from "$currenteui64address" to "$eui64address" and reboot olsrd2" >>$corrlog
+echo "############### EUI64 address is not correct" >>$log
+echo "### WARNING ### changing EUI from "$currenteui64address" to "$eui64address" and reboot olsrd2" >>$log
+echo "############### see "$corrlog" for further details" >>$log
+commandlist[${#commandlist[@]}]="delete interfaces loopback lo address $currenteui64address"
+commandlist[${#commandlist[@]}]="set    interfaces loopback lo address $eui64address"
+cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
+tfile=$(mktemp)
+(
+$cmd begin
+ret=0
+for executecmd in "${commandlist[@]}"; do
+if [ $ret == 0 ]; then
+echo "--execute:"$executecmd >>$corrlog
+$cmd $executecmd || ret=1
+else
+echo "--skipped: "$executecmd >>$corrlog
+fi
+done
+if [ $ret == 0 ]; then
+$cmd commit || ret=1
+fi
+if [ $ret == 0 ]; then
+$cmd save || ret=1
+fi
+$cmd end
+exit $ret
+) >$tfile 2>&1
+ret=$?
+output=$(cat $tfile)
+rm -f $tfile
+echo "${output}" >>$corrlog
+echo "restarting daemon: kill"  >>$corrlog
+ps aux | grep "/config/olsrd2/olsrd2 -l /config/olsrd2/olsrd2.conf" | grep -v grep | awk '{print $2;}' | xargs kill 2>/dev/null
+sleep 2
+rm -f /var/lock/olsrd2  >>$corrlog 2>>$corrlog
+echo "restarting daemon: start" >>$corrlog
+/config/olsrd2/olsrd2 -l /config/olsrd2/olsrd2.conf >>$corrlog 2>>$corrlog
+else
+echo "EUI "$currenteui64address" is correct" >>$corrlog
+fi
+else
+echo "no EUI assigned" >>$corrlog
+fi
+echo "Ended $(date +%Y-%m-%d/%H:%M:%S.%N) - Session="$$ >>$corrlog
+# END: this script corrects EUI64 address on edgerouters from switch0 to eth0
+##################
+
+
 # remove installation block
 sed -i '/^#base64begin/,/^#base64end$/d' $0
 # !dont edit or remove this comment!
@@ -5433,8 +5498,9 @@ load () {
     currenteui64address=$(ip -6 addr show lo | grep global | grep '2a02:61:0:ff:' | awk {'print $2'} | head -n 1)
     # EUI64 suitable for this unique EdgeRouter device (turn bit-7 of byte-1)
     # /usr/sbin/ubnt-hal show-version | grep "HW S/N" | awk {'print $3'}
-    basemac=$(ip -6 link show switch0 | grep link/ether | awk {'print $2'})
-    [ "$basemac" == "" ] && basemac=$(ip -6 link show eth0 | grep link/ether | awk {'print $2'})
+    #basemac=$(ip -6 link show switch0 | grep link/ether | awk {'print $2'})
+    #[ "$basemac" == "" ] && basemac=$(ip -6 link show eth0 | grep link/ether | awk {'print $2'})
+    basemac=$(ip -6 link show eth0 | grep link/ether | awk {'print $2'})
     if [ "$basemac" ]; then
         D2B=({0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1})
         byte=$((16#$(echo $basemac | awk -F: {'print $1'})))
@@ -5442,7 +5508,7 @@ load () {
         hexneu=$(printf '%02x' "$((2#$(echo -n ${bit:0:6}; [ ${bit:6:1} == "0" ] && echo -n "1" || echo -n "0"; echo ${bit:7:1})))")
         eui64address=$(echo $basemac | awk -F: {'print "2a02:61:0:ff:'$hexneu'"$2":"$3"ff:fe"$4":"$5$6"/128";'})
     else
-        eui64address="err: MAC address of switch0 or eth0 not found"
+        eui64address="err: MAC address of eth0 not found"
     fi
     eui4addr=",\"eui4address\":\"$eui64address\""
     if [ "$currenteui64address" == "$eui64address" ]; then
@@ -5682,8 +5748,9 @@ apply () {
     # currently assigned
     currenteui64address=$(ip -6 addr show lo | grep global | grep '2a02:61:0:ff:' | awk {'print $2'} | head -n 1)
     # EUI64 suitable for this unique EdgeRouter device (turn bit-7 of byte-1)
-    basemac=$(ip -6 link show switch0 | grep link/ether | awk {'print $2'})
-    [ "$basemac" == "" ] && basemac=$(ip -6 link show eth0 | grep link/ether | awk {'print $2'})
+    #basemac=$(ip -6 link show switch0 | grep link/ether | awk {'print $2'})
+    #[ "$basemac" == "" ] && basemac=$(ip -6 link show eth0 | grep link/ether | awk {'print $2'})
+    basemac=$(ip -6 link show eth0 | grep link/ether | awk {'print $2'})
     if [ "$basemac" ]; then
         D2B=({0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1})
         byte=$((16#$(echo $basemac | awk -F: {'print $1'})))
@@ -5691,7 +5758,7 @@ apply () {
         hexneu=$(printf '%02x' "$((2#$(echo -n ${bit:0:6}; [ ${bit:6:1} == "0" ] && echo -n "1" || echo -n "0"; echo ${bit:7:1})))")
         eui64address=$(echo $basemac | awk -F: {'print "2a02:61:0:ff:'$hexneu'"$2":"$3"ff:fe"$4":"$5$6"/128";'})
     else
-        eui64address="err: MAC address of switch0/eth0 not found"
+        eui64address="err: MAC address of eth0 not found"
     fi
     if [ "$eui4addron" == "on" ]; then
         if [ "$currenteui64address" != "$eui64address" ] && [ "$hexneu" ]; then
