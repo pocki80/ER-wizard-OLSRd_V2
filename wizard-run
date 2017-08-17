@@ -5169,9 +5169,9 @@ rm -f /tmp/$packagefile >>$log
 corrlog="/var/log/0xff_correct_EUI64.log"
 echo "Started $(date +%Y-%m-%d/%H:%M:%S.%N) - Session="$$ >>$corrlog
 currenteui64address=$(ip -6 addr show lo | grep global | grep '2a02:61:0:ff:' | awk {'print $2'} | head -n 1)
-echo "CURRENT: "$currenteui64address >>$log
+echo "CURRENT: "$currenteui64address >>$corrlog
 basemac=$(ip -6 link show eth0 | grep link/ether | awk {'print $2'})
-echo "BASEMAC: "$basemac >>$log
+echo "BASEMAC: "$basemac >>$corrlog
 if [ "$currenteui64address" ] && [ "$basemac" ]; then
 D2B=({0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1})
 byte=$((16#$(echo $basemac | awk -F: {'print $1'})))
