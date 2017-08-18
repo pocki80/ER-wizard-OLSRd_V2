@@ -2,7 +2,7 @@
 
 #
 # EdgeMAX Wizard "ER-wizard-OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
-# Version 20170816/pkg-0.8/oonf-0.14.1-16
+# Version 20170818/pkg-0.8/oonf-0.14.1-16
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: OLSRd_V2
 #
@@ -5910,8 +5910,8 @@ apply () {
         if   [ "$(echo $intf | grep eth | wc -l)" == "1" ];    then command="interfaces ethernet $intf ";
         elif [ "$(echo $intf | grep br | wc -l)" == "1" ];     then command="interfaces bridge $intf ";
         elif [ "$(echo $intf | grep switch | wc -l)" == "1" ]; then command="interfaces switch $intf ";
-        if [ "$vif" ]; then command=$command"vif "$vif" "; fi
         fi
+        if [ "$vif" ]; then command=$command"vif "$vif" "; fi
         if [ "$thislanon" ]; then
             lanenabled="yes"
             echo ", all fine" >>$log
@@ -5931,12 +5931,12 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             fwuser=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | select (.olsrv6intf=="'$interface'") | .firewallon' $INPUT)
             # ACTION: on/off -> disable
             if [ "$fwon" ] && [ "$fwuser" != "on" ]; then
-                echo "disable firewall for "$interface >>$log
+                echo "disable firewall/1 for "$interface >>$log
                 commandlist[${#commandlist[@]}]="delete "$command" firewall out ipv6-name lan_out0xff-6"
             fi
             # ACTION: off/on -> enable (if global ruleset exists)
             if [ "$fwon" == "" ] && [ "$fwuser" == "on" ] && [ "$firewallexists" ]; then
-                echo "enable firewall for "$interface >>$log
+                echo "enable firewall/1 for "$interface >>$log
                 commandlist[${#commandlist[@]}]="set "$command" firewall out ipv6-name lan_out0xff-6"
             fi
         else
@@ -5958,7 +5958,7 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             # ACTION: on -> disable 
             for lanif in "${fwlanlist[@]}"; do 
                 if [ "$lanif" == "$interface" ]; then
-                    echo "disable firewall for "$interface >>$log
+                    echo "disable firewall/0 for "$interface >>$log
                     commandlist[${#commandlist[@]}]="delete "$command" firewall out ipv6-name lan_out0xff-6"
                 fi
             done
@@ -6054,12 +6054,12 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
                 fwuser=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | select (.olsrv6intf=="'$i'") | .firewallon' $INPUT)
                 # ACTION: on/off -> disable
                 if [ "$fwon" ] && [ "$fwuser" != "on" ]; then
-                    echo "disable firewall for "$i >>$log
+                    echo "disable firewall/2 for "$i >>$log
                     commandlist[${#commandlist[@]}]="delete "$command" firewall out ipv6-name lan_out0xff-6"
                 fi
                 # ACTION: off/on -> enable (if global ruleset exists)
                 if [ "$fwon" == "" ] && [ "$fwuser" == "on" ] && [ "$firewallexists" ]; then
-                    echo "enable firewall for "$i >>$log
+                    echo "enable firewall/2 for "$i >>$log
                     commandlist[${#commandlist[@]}]="set "$command" firewall out ipv6-name lan_out0xff-6"
                 fi
             else
