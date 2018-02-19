@@ -2,7 +2,7 @@
 
 #
 # EdgeMAX Wizard "ER-wizard-OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
-# Version 20180202/pkg-0.8/oonf-0.14.1-16
+# Version 20180219/pkg-0.8/oonf-0.14.1-16
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: OLSRd_V2
 #
@@ -6859,6 +6859,21 @@ fi
 dpkg -i /tmp/$packagefile >>$log
 rm -f /tmp/$packagefile >>$log
 
+
+#check for rule 531 (olsrv1 port 698), add if missing
+if [ -d /opt/vyatta/config/active/firewall/ipv6-name/wan_local0xff-6/ ] &&
+   [ -d /opt/vyatta/config/active/firewall/ipv6-name/wan_local0xff-6/rule/530 ] &&
+   [ ! -d /opt/vyatta/config/active/firewall/ipv6-name/wan_local0xff-6/rule/531 ]; then
+    commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 531 description OLSRv1"
+    commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 531 action accept"
+    commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 531 destination port 698"
+    commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 531 source port 698"
+    commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 531 protocol udp"
+    commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 531 log disable"
+fi
+
+
+
 ##################
 # this script corrects EUI64 address on edgerouters from switch0 to eth0
 corrlog="/var/log/0xff_correct_EUI64.log"
@@ -6881,44 +6896,55 @@ if [ "$currenteui64address" ] && [ "$basemac" ]; then
         echo "############### see "$corrlog" for further details" >>$log
         commandlist[${#commandlist[@]}]="delete interfaces loopback lo address $currenteui64address"
         commandlist[${#commandlist[@]}]="set    interfaces loopback lo address $eui64address"
-        cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
-tfile=$(mktemp)
-(
-$cmd begin
-ret=0
-for executecmd in "${commandlist[@]}"; do
-if [ $ret == 0 ]; then
-echo "--execute:"$executecmd >>$corrlog
-$cmd $executecmd || ret=1
-else
-echo "--skipped: "$executecmd >>$corrlog
-fi
-done
-if [ $ret == 0 ]; then
-$cmd commit || ret=1
-fi
-if [ $ret == 0 ]; then
-$cmd save || ret=1
-fi
-$cmd end
-exit $ret
-) >$tfile 2>&1
-        ret=$?
-        output=$(cat $tfile)
-        rm -f $tfile
-        echo "${output}" >>$corrlog
-        echo "restarting daemon: kill"  >>$corrlog
-        ps aux | grep "/config/olsrd2/olsrd2 -l /config/olsrd2/olsrd2.conf" | grep -v grep | awk '{print $2;}' | xargs kill 2>/dev/null
-        sleep 2
-        rm -f /var/lock/olsrd2  >>$corrlog 2>>$corrlog
-        echo "restarting daemon: start" >>$corrlog
-        /config/olsrd2/olsrd2 -l /config/olsrd2/olsrd2.conf >>$corrlog 2>>$corrlog
+        restartolsrd2=1
     else
         echo "EUI "$currenteui64address" is correct" >>$corrlog
     fi
 else
     echo "no EUI assigned" >>$corrlog
 fi
+
+if [ ${#commandlist[@]} \> 0 ]; then
+    echo "Applying script commands..." >>$log
+    cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
+tfile=$(mktemp)
+(
+$cmd begin
+ret=0
+for executecmd in "${commandlist[@]}"; do
+    if [ $ret == 0 ]; then
+        echo "--"$executecmd >>$log
+        $cmd $executecmd || ret=1
+    else
+        echo "--skipped: "$executecmd >>$log
+    fi
+done
+if [ $ret == 0 ]; then
+    $cmd commit || ret=1
+fi
+if [ $ret == 0 ]; then
+    $cmd save || ret=1
+fi
+$cmd end
+exit $ret
+) >$tfile 2>&1
+ret=$?
+output=$(cat $tfile)
+rm -f $tfile
+echo "${output}" >> $log
+echo "${output}" >> $corrlog
+fi
+
+commandlist=""
+if [ "$restartolsrd2" ]; then 
+    echo "restarting daemon: kill"  >>$corrlog
+    ps aux | grep "/config/olsrd2/olsrd2 -l /config/olsrd2/olsrd2.conf" | grep -v grep | awk '{print $2;}' | xargs kill 2>/dev/null
+    sleep 2
+    rm -f /var/lock/olsrd2  >>$corrlog 2>>$corrlog
+    echo "restarting daemon: start" >>$corrlog
+    /config/olsrd2/olsrd2 -l /config/olsrd2/olsrd2.conf >>$corrlog 2>>$corrlog
+fi
+
 echo "Ended $(date +%Y-%m-%d/%H:%M:%S.%N) - Session="$$ >>$corrlog
 # END: this script corrects EUI64 address on edgerouters from switch0 to eth0
 ##################
@@ -7476,6 +7502,12 @@ JDrKTnXBmbogCAGwXoDHLthhGVl5v7yMNH8AuxILTtgpr6Pj6492nYUHrZya5safQD1wg0ThXjrCmHvM
         commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 530 source port 269"
         commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 530 protocol udp"
         commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 530 log disable"
+        commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 531 description OLSRv1"
+        commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 531 action accept"
+        commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 531 destination port 698"
+        commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 531 source port 698"
+        commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 531 protocol udp"
+        commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 531 log disable"
         commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 540 action accept"
         commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 540 protocol icmpv6"
         commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 540 description Allow-ICMPv6"
@@ -7489,6 +7521,7 @@ JDrKTnXBmbogCAGwXoDHLthhGVl5v7yMNH8AuxILTtgpr6Pj6492nYUHrZya5safQD1wg0ThXjrCmHvM
         commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 570 log disable"
         commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 570 protocol udp"
     fi
+    
 
     eui4addron=$(jq -M -r '.eui4addron' $INPUT)
     ####### check lo-EUI64 address assignement
