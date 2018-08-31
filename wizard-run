@@ -6872,6 +6872,17 @@ if [ -d /opt/vyatta/config/active/firewall/ipv6-name/wan_local0xff-6/ ] &&
     commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 531 log disable"
 fi
 
+#check for rule 541 (udp-ports for traceroute), add if missing
+if [ -d /opt/vyatta/config/active/firewall/ipv6-name/wan_local0xff-6/ ] &&
+   [ -d /opt/vyatta/config/active/firewall/ipv6-name/wan_local0xff-6/rule/540 ] &&
+   [ ! -d /opt/vyatta/config/active/firewall/ipv6-name/wan_local0xff-6/rule/541 ]; then
+    commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 541 action accept"
+    commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 541 description Allow-Traceroute6"
+    commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 541 protocol udp"
+    commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 541 log disable"
+    commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 541 destination port 33434-33534"
+fi
+
 
 
 ##################
@@ -7511,6 +7522,11 @@ JDrKTnXBmbogCAGwXoDHLthhGVl5v7yMNH8AuxILTtgpr6Pj6492nYUHrZya5safQD1wg0ThXjrCmHvM
         commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 540 action accept"
         commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 540 protocol icmpv6"
         commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 540 description Allow-ICMPv6"
+        commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 541 action accept"
+        commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 541 description Allow-Traceroute6"
+        commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 541 protocol udp"
+        commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 541 log disable"
+        commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 541 destination port 33434-33534"
         commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 560 description Webports-to-Router"
         commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 560 action accept"
         commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 560 destination group port-group WebServices0xFF"
