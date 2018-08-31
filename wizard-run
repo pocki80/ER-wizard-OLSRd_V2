@@ -6883,6 +6883,20 @@ if [ -d /opt/vyatta/config/active/firewall/ipv6-name/wan_local0xff-6/ ] &&
     commandlist[${#commandlist[@]}]="set firewall ipv6-name wan_local0xff-6 rule 541 destination port 33434-33534"
 fi
 
+#check for port 8080,9090,8081,9091 in portgroup
+if [ -d /opt/vyatta/config/active/firewall/group/port-group/WebServices0xFF/port ] &&
+   [ -f /opt/vyatta/config/active/firewall/group/port-group/WebServices0xFF/port/node.val ]; then
+     (grep -qw 8080 /opt/vyatta/config/active/firewall/group/port-group/WebServices0xFF/port/node.val) || commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 8080"
+     (grep -qw 9090 /opt/vyatta/config/active/firewall/group/port-group/WebServices0xFF/port/node.val) || commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 9090"
+     (grep -qw 8081 /opt/vyatta/config/active/firewall/group/port-group/WebServices0xFF/port/node.val) || commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 8081"
+     (grep -qw 9091 /opt/vyatta/config/active/firewall/group/port-group/WebServices0xFF/port/node.val) || commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 9091"
+else
+     commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 8080"
+     commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 8081"
+     commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 9090"
+     commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 9091"
+fi
+
 
 
 ##################
@@ -7472,6 +7486,10 @@ JDrKTnXBmbogCAGwXoDHLthhGVl5v7yMNH8AuxILTtgpr6Pj6492nYUHrZya5safQD1wg0ThXjrCmHvM
         commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 2007"
         commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 2006"
         commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 8000"
+        commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 8080"
+        commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 8081"
+        commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 9090"
+        commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 9091"
         commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 10443"
         commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 8443"
         commandlist[${#commandlist[@]}]="set firewall group port-group WebServices0xFF port 10"
