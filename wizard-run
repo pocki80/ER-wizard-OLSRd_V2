@@ -2,7 +2,7 @@
 
 #
 # EdgeMAX Wizard "ER-wizard-OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
-# Version 20180219/pkg-0.8/oonf-0.14.1-16
+# Version 20180927/pkg-0.8/oonf-0.14.1-16
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: OLSRd_V2
 #
@@ -7203,7 +7203,7 @@ load () {
     # currently assigned
     currentnodeidaddress=$(ip -6 addr show lo | grep global | grep '2a02:61:' | grep -vE "2a02:61:0:|2a02:61::" | awk {'print $2'} | head -n 1)
     # get node id from map data and form IPv6-User-Block address
-    nodeid=$(curl -4s --connect-timeout 2 --speed-time 2 http://ff.cybercomm.at/mynodeid.php 2>/dev/null)
+    nodeid=$(curl -4Ls --connect-timeout 2 --speed-time 2 https://ff.cybercomm.at/mynodeid.php 2>/dev/null)
 
     # use router/nic id from existing ipv6 address if exist
     #routeridhex="1"
