@@ -6756,7 +6756,7 @@ ffz7+Pfx7+Pfx7+Pfx//Pv59/Pv49/Hv49/Hv49/H//+uP7+f839X0wA6BcA
 fi
 
 #filecontentstart mips
-if [ $arch == 'mipsel' ]; then
+if [ $arch == 'mips' ]; then
 echo "ITxhcmNoPgpkZWJpYW4tYmluYXJ5ICAgMTUzOTg0NzE0MyAgMCAgICAgMCAgICAgMTAwNjQ0ICA0
 ICAgICAgICAgYAoyLjAKY29udHJvbC50YXIuZ3ogIDE1Mzk4NDcxNDMgIDAgICAgIDAgICAgIDEw
 MDY0NCAgMTgxMSAgICAgIGAKH4sIAAAAAAACA+1Z63PaRhD35/sr1oKJzbQCxNN1ipu0cfqlmWaS
@@ -13901,7 +13901,7 @@ load () {
     ####### google v6-dns assignment check
 
     #check for additional anouncements
-    all_announced_lans=$(grep -vE '^#|^$' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | sed -e "s/lan//" | sed -e "s/ //")
+    all_announced_lans=$(sed -e 's/#.*$//' -e '/^[ \t]*$/d' -e '/\[/i\ ' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | sed -e "s/lan//" | sed -e "s/ //")
     if [ -f /etc/radvd.conf ]; then
         all_advertized_lans=$(grep -m 1 prefix /etc/radvd.conf | awk {'print $2'} | sed -e "s/::\//::0\//")
     else
@@ -14321,7 +14321,7 @@ zfvr/rq//s3XH7wmIhIAcgAA
     for i in $(grep interface /etc/radvd.conf | awk {'print $2'} 2>/dev/null); do
         interface=$i
         prefix=$(grep -A 25 "interface "$interface" {" /etc/radvd.conf | grep -m 1 prefix | awk {'print $2'} | sed -e "s/::\//::0\//")
-        announced=$(grep -vE '^#|^$' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | grep $prefix | wc -l)
+        announced=$(sed -e 's/#.*$//' -e '/^[ \t]*$/d' -e '/\[/i\ ' /config/olsrd2/olsrd2.conf | grep lan | grep lan | sed -e "s/::\//::0\//" | grep $prefix | wc -l)
         userprefix=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | select (.olsrv6intf=="'$interface'") | .prefix' $INPUT)
         origprefix=$(jq -M -r '.olsr6config[] | select (.lanon=="on") | select (.olsrv6intf=="'$interface'") | .origprefix' $INPUT)
         if [ "$userprefix" != "" ] && [ "$origprefix" != "" ] && [ "$userprefix" != "$origprefix" ]; then
@@ -14435,7 +14435,7 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             fi
             if [ "$prefix" ] && [ "$addthisaddress" ]; then
                 echo "Debug-LAN 3 - generated "$prefix" and "$addthisaddress" to use for "$i >>$log
-                announced=$(grep -vE '^#|^$' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | grep $prefix | wc -l)
+                announced=$(sed -e 's/#.*$//' -e '/^[ \t]*$/d' -e '/\[/i\ ' /config/olsrd2/olsrd2.conf | grep lan | grep lan | sed -e "s/::\//::0\//" | grep $prefix | wc -l)
                 if [ "$announced" == "0" ]; then
                     linenumber=$(($(grep -inE -m 4 "announce user-block for clients|lan|\[olsrv2\]" /config/olsrd2/olsrd2.conf | tail -n 1 | awk -F: {'print $1'})+1))
                     sed -i $linenumber'i\
@@ -14499,7 +14499,7 @@ lan '$prefix /config/olsrd2/olsrd2.conf 2>>$log
             fi
         elif [ -f /etc/radvd.conf ]; then
             prefix=$(grep -A 25 "interface "$i" {" /etc/radvd.conf | grep -m 1 prefix | awk {'print $2'} | sed -e "s/::\//::0\//")
-            announced=$(grep -vE '^#|^$' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | grep $prefix | wc -l)
+            announced=$(sed -e 's/#.*$//' -e '/^[ \t]*$/d' -e '/\[/i\ ' /config/olsrd2/olsrd2.conf | grep lan | grep lan | sed -e "s/::\//::0\//" | grep $prefix | wc -l)
             if [ "$announced" == "0" ]; then
                 echo "Debug-LAN 2 - Announcement is missing, add lan-command to olsrd2.conf!" >>$log
                 linenumber=$(($(grep -inE -m 4 "announce user-block for clients|lan|\[olsrv2\]" /config/olsrd2/olsrd2.conf | tail -n 1 | awk -F: {'print $1'})+1))
@@ -14584,7 +14584,7 @@ echo "${output}" >> $log
 
     ####### check announcements 
     #
-    all_announced_lans=$(grep -vE '^#|^$' /config/olsrd2/olsrd2.conf | grep lan | sed -e "s/::\//::0\//" | sed -e "s/lan//" | sed -e "s/ //")
+    all_announced_lans=$(sed -e 's/#.*$//' -e '/^[ \t]*$/d' -e '/\[/i\ ' /config/olsrd2/olsrd2.conf | grep lan | grep lan | sed -e "s/::\//::0\//" | sed -e "s/lan//" | sed -e "s/ //")
     if [ -f /etc/radvd.conf ]; then
         all_advertized_lans=$(grep -m 1 prefix /etc/radvd.conf | awk {'print $2'} | sed -e "s/::\//::0\//")
     else
