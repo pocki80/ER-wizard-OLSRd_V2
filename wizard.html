@@ -2,21 +2,21 @@
 
 EdgeMAX Wizard "OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201811091
+versioninfo=201903310
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
-autoupdate=201811091
+autoupdate=201903310
 ^-- set autoupdate the same version identifier to allow autoupdates
 
 -->
-<div class="instructions">
-  EdgeMAX Wizard "OLSRd_V2"
-</div>
 <legend style="position:absolute;right:0px;padding:5px;">
     <center>EdgeMAX Wizard "OLSRd_V2"<br>created 03/2017 by CPO for FunkFeuer.at<br>
     Version 20181109/pkg-0.9/oonf-0.15.1.3-96</center>
 </legend>
+<div class="instructions">
+  EdgeMAX Wizard "OLSRd_V2"
+</div>
 
-<div style="padding:15px;border: 1px solid lightgray;width:648px">
+<div style="padding:15px;border: 1px solid lightgray;width:650px;float:none;clear:both;">
   <table border="0">
     <tr><td style="vertical-align:middle">OLSRd2 Status:</td><td><input style="right:10px" id="olsrd2status" name="olsrd2status" type="text" size="60" disabled /></td></tr>
     <tr><td style="vertical-align:middle">Update Info:  </td><td><input style="right:10px" id="updatestatus" name="updatestatus" type="text" size="60" disabled />
@@ -36,7 +36,7 @@ autoupdate=201811091
       <tr><td style="vertical-align:middle">Firewall rules exist</td> <td><input id="firewallcreated" name="firewallcreated"  type="checkbox" disabled /> Firewall-Rules have been created<td></tr>
       <tr><td style="vertical-align:middle">Initialize Firewall rules</td> <td><input id="initfirewall" name="initfirewall"  type="checkbox" /> Initialise or update firewall rules<td></tr>
       <tr><td style="vertical-align:middle">Enable v6 Firewall </td> <td><input id="routerfirewall" name="routerfirewall"  type="checkbox" /> Block unwanted IPv6 traffic to router<td></tr>
-      <tr><td style="vertical-align:middle">Assign Google DNSv6 </td> <td><input id="googlednson" name="googlednson"  type="checkbox" /> User IPv6-DNS servers from Google as name-servers<td></tr>
+      <tr><td style="vertical-align:middle">Assign Google DNSv6 </td> <td><input id="googlednson" name="googlednson"  type="checkbox" /> Use IPv6-DNS servers from Google as name-servers<td></tr>
       <tr><td style="vertical-align:middle">lo-Adresse EUI64 </td> <td><input style="right:10px" id="eui4address" name="eui4address" type="text" size="40" disabled />
                <input id="eui4addron" name="eui4addron"  type="checkbox" /><span> Assigned </span><td></tr>
       <tr><td style="vertical-align:middle">lo-Adresse NodeID<br>change here </td><td><input style="right:10px" id="nodeidaddress" name="nodeidaddress" type="text" size="40" />
