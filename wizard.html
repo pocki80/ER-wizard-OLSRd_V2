@@ -2,7 +2,7 @@
 
 EdgeMAX Wizard "OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201903310
+versioninfo=201906240
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 autoupdate=201903310
 ^-- set autoupdate the same version identifier to allow autoupdates
@@ -10,7 +10,7 @@ autoupdate=201903310
 -->
 <legend style="position:absolute;right:0px;padding:5px;">
     <center>EdgeMAX Wizard "OLSRd_V2"<br>created 03/2017 by CPO for FunkFeuer.at<br>
-    Version 20181109/pkg-0.9/oonf-0.15.1.3-96</center>
+    Version 20190624/pkg-0.9/oonf-0.15.1.3-96</center>
 </legend>
 <div class="instructions">
   EdgeMAX Wizard "OLSRd_V2"
@@ -90,7 +90,25 @@ autoupdate=201903310
 <button type="button" class="addable-add">Add</button>
 </div>
 </fieldset>
-<script>
+<fieldset id="l2neigh" name="l2neigh" class="primary expanded">
+<legend>Set Metric to Layer2-Neighbors</legend>
+<div class="addable" data-min="0" data-max="99" data-object="l2neigh" data-objectify="1">
+<div class="addable-template" style="padding-top:0px;">
+<div class="multi">
+<span class="text">Intf:</span>
+<span><select name="intf" style="height: 20px;" /></span>
+<span class="text">Mac:</span>
+<span><input name="macaddr" size="35" placeholder="mac-address of neighbor" /></span>
+<span class="text">RX:</span>
+<span><input name="metric" size="5" placeholder="bitrate" /></span>
+<span><select name="qual" style="height: 20px;" /></span>
+<span><button type="button" class="addable-remove">Remove</button></span>
+</div>
+</div>
+<div class="addable-container"></div>
+<button type="button" class="addable-add">Add</button>
+</div>
+</fieldset><script>
 function colors() {
     var input = document.getElementById('olsrd2status');
     input.style.color = "black";

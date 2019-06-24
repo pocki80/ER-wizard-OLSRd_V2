@@ -2,7 +2,7 @@
 
 #
 # EdgeMAX Wizard "ER-wizard-OLSRd_V2" created 03/2017 by CPO for FunkFeuer.at
-# Version 20181109/pkg-0.9/oonf-0.15.1.3-96
+# Version 20190624/pkg-0.9/oonf-0.15.1.3-96
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: OLSRd_V2
 #
@@ -14955,7 +14955,7 @@ load () {
         niciddec="0"
     fi
 
-    ####### olsrd v6 insterface list
+    ####### olsrd v6 interface list
     # 
     # get activated interfaces from olsrd2.conf
     olsr6meshif=$(awk -F= '/interface=/ {print $2}' /config/olsrd2/olsrd2.conf | tr -d \])
@@ -15042,7 +15042,31 @@ load () {
         tunnel4in6addrv4=""
     fi 
     # end
-    ####### olsrd v6 insterface list
+    ####### olsrd v6 interface list
+
+    #### check for metrics
+    #
+    for line in $(grep -E "^[ \t]*\[interface=|^[ \t]*l2neighbor" /config/olsrd2/olsrd2.conf | sed -e 's/[ \t][ \t]*/\,/ig'); do
+        i=$(echo "$line=" | cut -d"=" -f2 | tr -d " \]")
+        [ "$i" ] && interface=$i && continue
+        val=$(echo $line | cut -d, -f3)
+        if (echo $val | grep -q 000000000);then
+            val=$(echo $val | sed 's/000000000$//g')
+            qual='G'
+        elif (echo $val | grep -q 000000);then
+            val=$(echo $val | sed 's/000000$//g')
+            qual='M'
+        elif (echo $val | grep -q 000);then
+            val=$(echo $val | sed 's/000$//g')
+            qual='k'
+        else
+            qual='-'
+        fi
+        [ "$l2neigh" ] && l2neigh="$l2neigh,"
+        l2neigh="$l2neigh"'{"intf":"'$interface'","macaddr":"'$(echo $line | cut -d, -f4)'","metric":"'$val'","qual":"'$qual'"}'
+    done
+    #
+    #### check for metrics
 
     ####### ipv6 addresses check
     # 
@@ -15150,11 +15174,13 @@ load () {
     olsr6config=",\"olsr6config\":[$olsr6interfaces]"
     tunnel4in6=",\"tunnel4in6addrv4\":\"$tunnel4in6addrv4\""
     ipv6announce=",\"ipv6announce\":[$ipv6attachednets]"
+    meshdef=$(echo '"'$(echo "$olsr6meshif" | grep -vE "^lo$")'"' | sed 's/ /","/g')
+    metrics='"l2neigh":['$l2neigh']'
 
     echo -n "{\"success\":\"1\",\"data\":{"
     echo -n "$packagestatus $updatestatus $autostart $nodenumbers $firewallcreated $routerfirewall $olsr6config $ipv6announce $tunnel4in6 $eui4addr $nodeidaddr $googlednson $autoupdatefromgithub"
-    echo    "} ,\"definition\":{ } }"
-}
+    echo -n ",$metrics"
+    echo    "},\"definition\":{\"qual\":{\"options\":[\"G\",\"M\",\"k\"]},\"intf\":{\"options\":[$meshdef]}}}"}
 
 # function called when you click apply
 apply () {
