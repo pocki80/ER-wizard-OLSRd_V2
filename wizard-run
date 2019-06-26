@@ -15897,6 +15897,7 @@ lan '$user /config/olsrd2/olsrd2.conf 2>>$log
         [[ "$macaddr" =~ ^([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}$ ]] || continue
         val=$(echo $line | cut -d"," -f3)
         [ "$val" ] || continue
+        [[ "$val" =~ "^[0-9]+$" ]] || continue
         qual=$(echo $line | cut -d"," -f2)
         #calculate metric value
         if [ "$qual" == "G" ]; then

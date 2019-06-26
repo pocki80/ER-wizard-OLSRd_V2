@@ -1,12 +1,10 @@
 {"rules":
  {
-  "l2neigh":{
    "intf":{"required":"true"}
   ,"macaddr":{"required":"true"}
   ,"metric":{
      "required":"true"
     ,"number":1
-   }
   }
  }
 }
