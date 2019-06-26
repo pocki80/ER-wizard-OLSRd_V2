@@ -15180,7 +15180,8 @@ load () {
     echo -n "{\"success\":\"1\",\"data\":{"
     echo -n "$packagestatus $updatestatus $autostart $nodenumbers $firewallcreated $routerfirewall $olsr6config $ipv6announce $tunnel4in6 $eui4addr $nodeidaddr $googlednson $autoupdatefromgithub"
     echo -n ",$metrics"
-    echo    "},\"definition\":{\"qual\":{\"options\":[\"G\",\"M\",\"k\"]},\"intf\":{\"options\":[$meshdef]}}}"}
+    echo    "},\"definition\":{\"qual\":{\"options\":[\"G\",\"M\",\"k\"]},\"intf\":{\"options\":[$meshdef]}}}"
+}
 
 # function called when you click apply
 apply () {
