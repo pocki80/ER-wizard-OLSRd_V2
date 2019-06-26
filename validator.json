@@ -1,1 +1,10 @@
-{}
+{"rules":
+ {
+  "intf":{"required":"true"}
+ ,"macaddr":{"required":"true"}
+ ,"metric":{
+    "required":"true"
+   ,"number":1
+  }
+ }
+}
